@@ -2,15 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-enum PermissionType {
-    GENESIS,
-    SUPER,
-    GENERIC
-}
+contract PermissionToken is ERC721URIStorage {
+    using Counters for Counters.Counter;
 
-contract PermissionToken is ERC721 {
+    enum PermissionType {
+        GENESIS,
+        SUPER,
+        GENERIC
+    }
+
+    Counters.Counter private _tokenIds;
     PermissionType public permType;
     address public orgAddress;
 
@@ -19,5 +23,27 @@ contract PermissionToken is ERC721 {
     {
         orgAddress = _orgAddress;
         permType = _permType;
+    }
+
+    function createToken(string memory tokenURI, address _owner)
+        public
+        returns (uint256)
+    {
+        //1. Increment the id counter
+        _tokenIds.increment();
+
+        //2. Assign the id to the tokenURI
+        uint256 newItemId = _tokenIds.current();
+
+        //3. Mint the token
+        _mint(_owner, newItemId);
+
+        //4. Set the tokenURI
+        _setTokenURI(newItemId, tokenURI);
+
+        //5. Allow the smart contract to interac
+        setApprovalForAll(msg.sender, true);
+
+        return newItemId;
     }
 }

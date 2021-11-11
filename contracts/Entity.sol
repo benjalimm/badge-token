@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Entity is ReentrancyGuard, Ownable {
+contract Entity is ReentrancyGuard {
     string public entityName;
     address public genesisUserAddress;
     mapping(address => UserData) public superUsers;
@@ -40,6 +40,8 @@ contract Entity is ReentrancyGuard, Ownable {
         genUserOnly
         nonReentrant
     {}
+
+    function 
 }
 
 struct UserData {
