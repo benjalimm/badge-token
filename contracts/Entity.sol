@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./PermissionToken.sol";
 
 contract Entity is ReentrancyGuard {
     string public entityName;
@@ -34,14 +35,19 @@ contract Entity is ReentrancyGuard {
         _;
     }
 
-    function createSuperUser(address _walletAddress)
-        public
-        payable
-        genUserOnly
-        nonReentrant
-    {}
+    // function assignSuperUser(address _userAddress)
+    //     public
+    //     genUserOnly
+    //     nonReentrant
+    //     returns (bool)
+    // {
+    //     if (superUsers[_userAddress].exists) {
+    //         return false;
+    //     }
 
-    function 
+    //     superUsers[_userAddress] = UserData(_userAddress, );
+    //     return true;
+    // }
 }
 
 struct UserData {

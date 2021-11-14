@@ -4,29 +4,38 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./Entity.sol";
+import "./BadgeContractV1.sol";
 
 contract PermissionToken is ERC721URIStorage {
     using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
 
     enum PermissionType {
+        NONE,
         GENESIS,
         SUPER,
         GENERIC
     }
 
-    Counters.Counter private _tokenIds;
-    PermissionType public permType;
+    PermissionType public permType = PermissionType.NONE;
+
     address public orgAddress;
 
-    constructor(address _orgAddress, PermissionType _permType)
-        ERC721("Badge permission token", "BADGE_PERM")
-    {
-        orgAddress = _orgAddress;
-        permType = _permType;
+    constructor() ERC721("Badge permission token", "BADGE_PERM") {}
+
+    function mintGenesisToken(
+        string memory tokenURI,
+        string memory entityName,
+        address badgeAddress
+    ) public payable returns (uint256) {
+        BadgeV1 badge = BadgeV1(badgeAddress);
+        badge.deployEntity(entityName);
+        return createToken(tokenURI, msg.sender);
     }
 
     function createToken(string memory tokenURI, address _owner)
-        public
+        internal
         returns (uint256)
     {
         //1. Increment the id counter
@@ -42,7 +51,8 @@ contract PermissionToken is ERC721URIStorage {
         _setTokenURI(newItemId, tokenURI);
 
         //5. Allow the smart contract to interac
-        setApprovalForAll(msg.sender, true);
+        console.log("SenderID:");
+        console.log(msg.sender);
 
         return newItemId;
     }
