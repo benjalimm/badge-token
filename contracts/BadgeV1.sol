@@ -22,9 +22,18 @@ contract BadgeV1 {
         console.log("Succesfully deployed");
     }
 
+    modifier genTokenOnly() {
+        require(
+            msg.sender == address(genesisToken),
+            "Can only be called from genesis token"
+        );
+        _;
+    }
+
     function deployEntity(string memory entityName)
         public
         payable
+        genTokenOnly
         returns (Entity)
     {
         Entity entity = new Entity(entityName);
