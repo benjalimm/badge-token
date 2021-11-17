@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { Entity } from "../typechain";
 
 const ownerAddress = "0x15eDb84992cd6E3ed4f0461B0Fbe743AbD1eA7b5";
 describe("Greeter", function () {
@@ -20,35 +21,38 @@ describe("Greeter", function () {
 });
 describe("Entity + Permission token test", () => {
   it("Should successfully deploy an entity and generate a genesis token for the user", async () => {
-    // 1. Deploy entity
-    console.log("Attempting to deploy entity contract");
-    const entity = await ethers.getContractFactory("Entity");
-    const entityInstance = await entity.deploy("Entity");
-    await entityInstance.deployed();
-    const entityAddress = await entityInstance.address;
-    console.log("Entity successfully deployed to address: ", entityAddress);
+    // 1. Deploy badge contract
+    const badgeContract = await ethers.getContractFactory("BadgeV1");
+    const badge = await badgeContract.deploy();
+    await badge.deployed();
+    const badgeAddress = badge.address;
 
-    // 2. Deploy permission token
-    console.log("Attempting to deploy permission contract");
-    const permissionContract = await ethers.getContractFactory(
-      "PermissionToken"
-    );
-    const permissionToken = await permissionContract.deploy(entityAddress, 0);
-    await permissionToken.deployed();
-    const permissionTokenAddress = await permissionToken.address;
-    console.log(
-      "Permission contract successfully deployed to address: ",
-      permissionTokenAddress
+    // 2. Mint genesis token -> Deploy entity
+    const genesisTokenContract = await ethers.getContractFactory(
+      "GenesisToken"
     );
 
-    // 3. Generate genesis token
-    console.log("Attempting to generate genesis token");
-    const id = await entityInstance.generateGenesisToken(
-      permissionTokenAddress
+    const genesisToken = await genesisTokenContract.attach(
+      await badge.genesisToken()
     );
-    console.log("Successfully Generated genesis token with id: ", id);
+    const entityAddress = await genesisToken.mintGenToken(
+      "tokenURI",
+      "Badge company",
+      badgeAddress
+    );
 
-    // 4. Assign super user
-    console.log("Attempting to assign super user");
+    // 3. Assign super user token
+    const superUserTokenContract = await ethers.getContractFactory(
+      "SuperUserToken"
+    );
+    const superUserToken = await superUserTokenContract.attach(
+      await badge.superUserToken()
+    );
+    await superUserToken.mintSuperUserToken(
+      "tokenURI",
+      ownerAddress,
+      "",
+      badgeAddress
+    );
   });
 });

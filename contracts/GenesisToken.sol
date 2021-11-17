@@ -5,33 +5,27 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
-import "./BadgeContractV1.sol";
+import "./BadgeV1.sol";
+import "./Structs.sol";
 
-contract PermissionToken is ERC721URIStorage {
+contract GenesisToken is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    enum PermissionType {
-        NONE,
-        GENESIS,
-        SUPER,
-        GENERIC
-    }
+    mapping(address => Owner) public orgToOwner;
 
-    PermissionType public permType = PermissionType.NONE;
+    constructor() ERC721("Badge - Genesis token", "BADGE_GENESIS") {}
 
-    address public orgAddress;
-
-    constructor() ERC721("Badge permission token", "BADGE_PERM") {}
-
-    function mintGenesisToken(
+    function mintGenToken(
         string memory tokenURI,
         string memory entityName,
         address badgeAddress
-    ) public payable returns (uint256) {
+    ) public payable returns (address) {
         BadgeV1 badge = BadgeV1(badgeAddress);
-        badge.deployEntity(entityName);
-        return createToken(tokenURI, msg.sender);
+        Entity entity = badge.deployEntity(entityName);
+        orgToOwner[address(entity)] = Owner(msg.sender, true);
+        createToken(tokenURI, msg.sender);
+        return address(entity);
     }
 
     function createToken(string memory tokenURI, address _owner)
