@@ -30,6 +30,16 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    hardhat: {
+      chainId: 1337,
+    },
+    mumbai: {
+      url: "https://polygon-mumbai.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
+      accounts: [],
+    },
+    mainnet: {
+      url: "https://polygon-mainnet.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
