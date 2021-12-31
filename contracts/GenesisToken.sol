@@ -16,6 +16,12 @@ contract GenesisToken is ERC721URIStorage {
 
     constructor() ERC721("Badge - Genesis token", "BADGE_GENESIS") {}
 
+    event EntityDeployed(
+        address entityAddress,
+        string entityName,
+        address genesisTokenHolder
+    );
+
     function mintGenToken(
         string memory tokenURI,
         string memory entityName,
@@ -26,6 +32,7 @@ contract GenesisToken is ERC721URIStorage {
         orgToOwner[address(entity)] = Owner(msg.sender, true);
         createToken(tokenURI, msg.sender);
         console.log("Entity address: ", address(entity));
+        emit EntityDeployed(address(entity), entityName, msg.sender);
         return address(entity);
     }
 
