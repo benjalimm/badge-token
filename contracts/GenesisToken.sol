@@ -25,6 +25,7 @@ contract GenesisToken is ERC721URIStorage {
         Entity entity = badge.deployEntity(entityName);
         orgToOwner[address(entity)] = Owner(msg.sender, true);
         createToken(tokenURI, msg.sender);
+        console.log("Entity address: ", address(entity));
         return address(entity);
     }
 
