@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./GenesisToken.sol";
 import "./SuperUserToken.sol";
 import "./BadgeV1.sol";
@@ -11,12 +12,14 @@ import "./Structs.sol";
 import "./BadgeToken.sol";
 
 contract Entity is ReentrancyGuard {
+    using Counters for Counters.Counter;
+
     string public entityName;
     address public genesisUserAddress;
     mapping(address => UserData) public superUsers;
     mapping(address => UserData) public basicUsers;
 
-    uint256 public demeritPoints = 0;
+    Counters.Counter public demeritPoints;
     BadgeToken public badgeTokenContact;
 
     constructor(string memory _entityName) {
@@ -91,5 +94,17 @@ contract Entity is ReentrancyGuard {
         } else {
             return false;
         }
+    }
+
+    function incrementDemeritPoints() external payable {
+        require(
+            msg.sender == address(badgeTokenContact),
+            "Only badge token can increment demerit points"
+        );
+        demeritPoints.increment();
+    }
+
+    function getDemeritPoints() public view returns (uint256) {
+        return demeritPoints.current();
     }
 }

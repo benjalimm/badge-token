@@ -5,16 +5,25 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./Entity.sol";
 
 contract BadgeToken is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     address public entityAddress;
 
+    // Mapping tokenId to time minted
+    mapping(uint256 => uint256) private _idToDateMinted;
+
     constructor(address _entityAddress, string memory _entityName)
         ERC721(join(_entityName, " - Badges"), join(_entityName, "_BADGE"))
     {
         entityAddress = _entityAddress;
+    }
+
+    modifier entityOnly() {
+        require(msg.sender == entityAddress);
+        _;
     }
 
     function join(string memory a, string memory b)
@@ -31,5 +40,33 @@ contract BadgeToken is ERC721URIStorage {
         uint256 tokenId
     ) internal override {
         require(false, "Badges are unique to a user and cannot be transferred");
+    }
+
+    event BadgeBurned(address entityAddress, bool withPrejudice);
+
+    function burnWithPrejudice(uint256 tokenId) external payable {
+        require(
+            msg.sender == ownerOf(tokenId),
+            "Only the owner can burn a badge"
+        );
+        require(
+            (block.timestamp - _idToDateMinted[tokenId]) <= (60 * 60 * 24 * 7),
+            "burnWithPrejudice only available for 7 days"
+        );
+        _burn(tokenId);
+        Entity(entityAddress).incrementDemeritPoints();
+        emit BadgeBurned(entityAddress, true);
+    }
+
+    function mintBadge(address userId, string memory tokenURI)
+        external
+        payable
+        entityOnly
+    {
+        _tokenIds.increment();
+        uint256 newItemId = _tokenIds.current();
+
+        _mint(userId, newItemId);
+        _setTokenURI(newItemId, tokenURI);
     }
 }
