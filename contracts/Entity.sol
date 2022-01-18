@@ -8,6 +8,7 @@ import "./GenesisToken.sol";
 import "./SuperUserToken.sol";
 import "./BadgeV1.sol";
 import "./Structs.sol";
+import "./BadgeToken.sol";
 
 contract Entity is ReentrancyGuard {
     string public entityName;
@@ -15,10 +16,14 @@ contract Entity is ReentrancyGuard {
     mapping(address => UserData) public superUsers;
     mapping(address => UserData) public basicUsers;
 
+    uint256 public demeritPoints = 0;
+    BadgeToken public badgeTokenContact;
+
     constructor(string memory _entityName) {
         console.log("Deployed new entity:", _entityName);
         entityName = _entityName;
         genesisUserAddress = msg.sender;
+        badgeTokenContact = new BadgeToken(address(this), _entityName);
     }
 
     modifier genUserOnly() {

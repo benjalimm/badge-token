@@ -30,6 +30,6 @@ contract BadgeToken is ERC721URIStorage {
         address to,
         uint256 tokenId
     ) internal override {
-        require(false, "Transferring Badges is not supported");
+        require(false, "Badges are unique to a user and cannot be transferred");
     }
 }
