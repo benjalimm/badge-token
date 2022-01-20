@@ -68,5 +68,6 @@ contract BadgeToken is ERC721URIStorage {
 
         _mint(userId, newItemId);
         _setTokenURI(newItemId, tokenURI);
+        emit Transfer(entityAddress, userId, newItemId);
     }
 }

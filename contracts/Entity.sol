@@ -2,103 +2,105 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./GenesisToken.sol";
-import "./SuperUserToken.sol";
-import "./BadgeV1.sol";
-import "./Structs.sol";
 import "./BadgeToken.sol";
+import "./PermissionToken.sol";
 
-contract Entity is ReentrancyGuard {
+contract Entity {
     using Counters for Counters.Counter;
 
-    string public entityName;
-    address public genesisUserAddress;
-    mapping(address => UserData) public superUsers;
-    mapping(address => UserData) public basicUsers;
-
-    Counters.Counter public demeritPoints;
-    BadgeToken public badgeTokenContact;
-
-    constructor(string memory _entityName) {
-        console.log("Deployed new entity:", _entityName);
-        entityName = _entityName;
-        genesisUserAddress = msg.sender;
-        badgeTokenContact = new BadgeToken(address(this), _entityName);
+    enum PermissionTokenType {
+        ADMIN,
+        SUPER_ADMIN,
+        GENESIS
     }
 
-    modifier genUserOnly() {
+    string public entityName;
+    mapping(address => PermissionTokenType) public permissionTokenHolders;
+    BadgeToken public badgeTokenContract;
+    PermissionToken public permissionTokenContract;
+    Counters.Counter public demeritPoints;
+
+    event EntityDeployed(
+        address entityAddress,
+        string entityName,
+        address genesisTokenHolder
+    );
+
+    constructor(string memory _entityName, string memory _genesisTokenURI) {
+        console.log("Deployed new entity:", _entityName);
+        entityName = _entityName;
+
+        // Init Permission token contract
+        permissionTokenContract = new PermissionToken(
+            address(this),
+            _entityName
+        );
+
+        // Initialize the Badge token contract
+        badgeTokenContract = new BadgeToken(address(this), _entityName);
+
+        // Assign Genesis Badge token
+        assignPermissionTokenHolder(
+            msg.sender,
+            PermissionTokenType.GENESIS,
+            _genesisTokenURI
+        );
+
+        emit EntityDeployed(address(this), _entityName, msg.sender);
+    }
+
+    modifier genAdminOnly() {
         require(
-            msg.sender == genesisUserAddress,
+            permissionTokenHolders[msg.sender] == PermissionTokenType.GENESIS,
             "Sender has no genesis user privilege"
         );
         _;
     }
 
-    modifier superUsersOnly() {
+    modifier genOrSuperAdminOnly() {
         require(
-            (superUsers[msg.sender].exists) ||
-                (msg.sender == genesisUserAddress),
+            permissionTokenHolders[msg.sender] ==
+                PermissionTokenType.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] ==
+                PermissionTokenType.GENESIS,
             "Sender has no super user privilege"
         );
         _;
     }
 
-    modifier superUserTokenOnly(address badgeAddress) {
-        BadgeV1 badge = BadgeV1(badgeAddress);
+    modifier adminsOnly(address badgeAddress) {
         require(
-            address(badge.superUserToken()) == msg.sender,
-            "Sender is not super user token"
+            permissionTokenHolders[msg.sender] == PermissionTokenType.ADMIN ||
+                permissionTokenHolders[msg.sender] ==
+                PermissionTokenType.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] ==
+                PermissionTokenType.GENESIS,
+            "Sender has no super user privilege"
         );
         _;
     }
 
-    modifier basicUserTokenOnly(address badgeAddress) {
-        BadgeV1 badge = BadgeV1(badgeAddress);
+    function assignPermissionTokenHolder(
+        address _holder,
+        PermissionTokenType _type,
+        string memory _tokenURI
+    ) private {
         require(
-            address(badge.basicUserToken()) == msg.sender,
-            "Sender is not super user token"
+            _type == PermissionTokenType.ADMIN ||
+                _type == PermissionTokenType.SUPER_ADMIN ||
+                _type == PermissionTokenType.GENESIS,
+            "Invalid permission token type"
         );
-        _;
-    }
 
-    function assignSuperUser(
-        address userAddress,
-        address assigningAddress,
-        address badgeAddress
-    ) public nonReentrant superUserTokenOnly(badgeAddress) {
-        superUsers[userAddress] = UserData(assigningAddress, true);
-    }
+        permissionTokenHolders[_holder] = _type;
 
-    function assignBasicUser(
-        address userAddress,
-        address assigningAddress,
-        address badgeAddress
-    ) public nonReentrant basicUserTokenOnly(badgeAddress) {
-        basicUsers[userAddress] = UserData(assigningAddress, true);
-    }
-
-    function doesUserExist(address userAddress, TokenType tokenType)
-        public
-        view
-        returns (bool)
-    {
-        if (tokenType == TokenType.GENESIS) {
-            return genesisUserAddress == userAddress;
-        } else if (tokenType == TokenType.SUPER_USER) {
-            return superUsers[userAddress].exists;
-        } else if (tokenType == TokenType.BASIC_USER) {
-            return basicUsers[userAddress].exists;
-        } else {
-            return false;
-        }
+        permissionTokenContract.createToken(_holder, _tokenURI);
     }
 
     function incrementDemeritPoints() external payable {
         require(
-            msg.sender == address(badgeTokenContact),
+            msg.sender == address(badgeTokenContract),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
