@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 import "./Entity.sol";
 
 contract BadgeRegistry {
-    address[] public entities;
+    mapping(address => string) public entities;
 
     constructor() {
         console.log("Successfully deployed");
@@ -16,7 +16,7 @@ contract BadgeRegistry {
         string memory genesisTokenURI
     ) external payable returns (Entity) {
         Entity entity = new Entity(entityName, genesisTokenURI);
-        entities.push(address(entity));
+        entities[address(entity)] = entityName;
         return entity;
     }
 }
