@@ -32,10 +32,10 @@ contract Entity {
         entityName = _entityName;
 
         // Init Permission token contract
-        permissionTokenContract = new PermissionToken(
-            address(this),
-            _entityName
-        );
+        // permissionTokenContract = new PermissionToken(
+        //     address(this),
+        //     _entityName
+        // );
 
         // Initialize the Badge token contract
         badgeTokenContract = new BadgeToken(address(this), _entityName);
@@ -69,7 +69,7 @@ contract Entity {
         _;
     }
 
-    modifier adminsOnly(address badgeAddress) {
+    modifier adminsOnly() {
         require(
             permissionTokenHolders[msg.sender] == PermissionTokenType.ADMIN ||
                 permissionTokenHolders[msg.sender] ==

@@ -11,12 +11,11 @@ contract BadgeRegistry {
         console.log("Successfully deployed");
     }
 
-    function deployEntity(
-        string memory entityName,
-        string memory genesisTokenURI
-    ) external payable returns (Entity) {
-        Entity entity = new Entity(entityName, genesisTokenURI);
-        entities[address(entity)] = entityName;
-        return entity;
+    function deployEntity(string calldata name, string calldata genesisTokenURI)
+        external
+        payable
+    {
+        Entity e = new Entity(name, genesisTokenURI);
+        entities[address(e)] = name;
     }
 }
