@@ -19,11 +19,10 @@ async function main() {
   // console.log("Greeter deployed to:", greeter.address);
 
   // 1. Deploy badge contract
-  const badgeContract = await ethers.getContractFactory("BadgeV1");
+  const badgeContract = await ethers.getContractFactory("BadgeRegistry");
   const badge = await badgeContract.deploy();
   await badge.deployed();
   console.log("Badge deployed to:", badge.address);
-  console.log("Genesis token:", await badge.genesisToken());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

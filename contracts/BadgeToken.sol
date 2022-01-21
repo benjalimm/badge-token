@@ -35,19 +35,16 @@ contract BadgeToken is ERC721URIStorage {
         address to,
         uint256 tokenId
     ) internal override {
-        require(false, "Badges are unique to a user and cannot be transferred");
+        require(false, "Transfer not allowed");
     }
 
     event BadgeBurned(address entityAddress, bool withPrejudice);
 
     function burnWithPrejudice(uint256 tokenId) external payable {
-        require(
-            msg.sender == ownerOf(tokenId),
-            "Only the owner can burn a badge"
-        );
+        require(msg.sender == ownerOf(tokenId), "Only owner can burn badge");
         require(
             (block.timestamp - _idToDateMinted[tokenId]) <= (60 * 60 * 24 * 7),
-            "burnWithPrejudice only available for 7 days"
+            "Not allowed after 7 days"
         );
         _burn(tokenId);
         Entity(entityAddress).incrementDemeritPoints();

@@ -1,22 +1,18 @@
 pragma solidity ^0.8.0;
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./Entity.sol";
 
 contract PermissionToken is ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
-    address public entityAddress;
+    Counters.Counter private _ids;
+    address public ent;
 
-    constructor(address _entityAddress, string memory _entityName)
-        ERC721(
-            join(_entityName, " - Permission Tokens"),
-            join(_entityName, "_PERMISSION")
-        )
+    constructor(address _ent, string memory _name)
+        ERC721(join(_name, " - Permission Tokens"), join(_name, "_PERMISSION"))
     {
-        entityAddress = _entityAddress;
+        ent = _ent;
     }
 
     function join(string memory a, string memory b)
@@ -32,16 +28,13 @@ contract PermissionToken is ERC721URIStorage {
         payable
         returns (uint256)
     {
-        require(
-            msg.sender == entityAddress,
-            "Only the entity can create tokens"
-        );
+        require(msg.sender == ent, "Not allowed");
 
         //1. Increment the id counter
-        _tokenIds.increment();
+        _ids.increment();
 
         //2. Assign the id to the tokenURI
-        uint256 newItemId = _tokenIds.current();
+        uint256 newItemId = _ids.current();
 
         //3. Mint the token
         _mint(_owner, newItemId);
