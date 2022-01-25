@@ -7,12 +7,15 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract PermissionToken is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _ids;
-    address public ent;
+    address public entityAddress;
 
-    constructor(address _ent, string memory _name)
-        ERC721(join(_name, " - Permission Tokens"), join(_name, "_PERMISSION"))
-    {
-        ent = _ent;
+    constructor(
+        address _entityAddress,
+        string memory _name,
+        string memory _genTokenURI
+    ) ERC721(join(_name, " - Permission Tokens"), join(_name, "_PERMISSION")) {
+        entityAddress = _entityAddress;
+        mintToken(msg.sender, _genTokenURI);
     }
 
     function join(string memory a, string memory b)
@@ -26,10 +29,12 @@ contract PermissionToken is ERC721URIStorage {
     function createToken(address _owner, string memory tokenURI)
         external
         payable
-        returns (uint256)
     {
-        require(msg.sender == ent, "Not allowed");
+        require(msg.sender == entityAddress, "Not allowed");
+        mintToken(_owner, tokenURI);
+    }
 
+    function mintToken(address _owner, string memory tokenURI) private {
         //1. Increment the id counter
         _ids.increment();
 
@@ -41,7 +46,5 @@ contract PermissionToken is ERC721URIStorage {
 
         //4. Set the tokenURI
         _setTokenURI(newItemId, tokenURI);
-
-        return newItemId;
     }
 }

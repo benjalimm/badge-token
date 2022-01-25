@@ -2,32 +2,22 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
+import "./BadgeRegistry.sol";
 
 contract BadgeToken is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    address public entityAddress;
 
     // Mapping tokenId to time minted
     mapping(uint256 => uint256) private _idToDateMinted;
+    address public badgeRegistry;
 
-    constructor(address _entityAddress, string memory _entityName)
-        ERC721(join(_entityName, " - Badges"), join(_entityName, "_BADGE"))
-    {
-        entityAddress = _entityAddress;
-    }
+    constructor(address _badgeRegistry) ERC721("Badge.", "BADGE") {}
 
-    modifier entityOnly() {
-        require(msg.sender == entityAddress);
+    modifier entityRegistered() {
+        bool registered = BadgeRegistry(badgeRegistry).isRegistered(msg.sender);
+        require(registered, "Entity is not registered");
         _;
-    }
-
-    function join(string memory a, string memory b)
-        internal
-        pure
-        returns (string memory)
-    {
-        return string(abi.encodePacked(a, b));
     }
 
     function _transfer(
@@ -47,20 +37,20 @@ contract BadgeToken is ERC721URIStorage {
             "Not allowed after 7 days"
         );
         _burn(tokenId);
-        Entity(entityAddress).incrementDemeritPoints();
-        emit BadgeBurned(entityAddress, true);
+        Entity(msg.sender).incrementDemeritPoints();
+        emit BadgeBurned(msg.sender, true);
     }
 
     function mintBadge(address userId, string memory tokenURI)
         external
         payable
-        entityOnly
+        entityRegistered
     {
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
         _mint(userId, newItemId);
         _setTokenURI(newItemId, tokenURI);
-        emit Transfer(entityAddress, userId, newItemId);
+        emit Transfer(msg.sender, userId, newItemId);
     }
 }

@@ -17,8 +17,10 @@ contract Entity {
 
     string public entityName;
     mapping(address => PermissionTokenType) public permissionTokenHolders;
-    BadgeToken public badgeTokenContract;
-    PermissionToken public permissionTokenContract;
+    address public badgeContract;
+    address public permissionContract;
+    address public upgradedContract;
+
     Counters.Counter public demeritPoints;
 
     event EntityDeployed(
@@ -27,25 +29,17 @@ contract Entity {
         address genesisTokenHolder
     );
 
-    constructor(string memory _entityName, string memory _genesisTokenURI) {
+    constructor(
+        string memory _entityName,
+        address _badgeContract,
+        address _permissionContract
+    ) {
         console.log("Deployed new entity:", _entityName);
         entityName = _entityName;
+        badgeContract = _badgeContract;
+        permissionContract = _permissionContract;
 
-        // Init Permission token contract
-        // permissionTokenContract = new PermissionToken(
-        //     address(this),
-        //     _entityName
-        // );
-
-        // Initialize the Badge token contract
-        badgeTokenContract = new BadgeToken(address(this), _entityName);
-
-        // Assign Genesis Badge token
-        assignPermissionTokenHolder(
-            msg.sender,
-            PermissionTokenType.GENESIS,
-            _genesisTokenURI
-        );
+        assignPermissionTokenHolder(msg.sender, PermissionTokenType.GENESIS);
 
         emit EntityDeployed(address(this), _entityName, msg.sender);
     }
@@ -53,7 +47,7 @@ contract Entity {
     modifier genAdminOnly() {
         require(
             permissionTokenHolders[msg.sender] == PermissionTokenType.GENESIS,
-            "Sender has no genesis user privilege"
+            "Gen privileges required"
         );
         _;
     }
@@ -83,8 +77,7 @@ contract Entity {
 
     function assignPermissionTokenHolder(
         address _holder,
-        PermissionTokenType _type,
-        string memory _tokenURI
+        PermissionTokenType _type
     ) private {
         require(
             _type == PermissionTokenType.ADMIN ||
@@ -95,12 +88,12 @@ contract Entity {
 
         permissionTokenHolders[_holder] = _type;
 
-        permissionTokenContract.createToken(_holder, _tokenURI);
+        // permissionTokenContract.createToken(_holder, _tokenURI);
     }
 
     function incrementDemeritPoints() external payable {
         require(
-            msg.sender == address(badgeTokenContract),
+            msg.sender == address(badgeContract),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
@@ -108,5 +101,12 @@ contract Entity {
 
     function getDemeritPoints() public view returns (uint256) {
         return demeritPoints.current();
+    }
+
+    function setUpgradedEntityContract(address _contract)
+        external
+        genAdminOnly
+    {
+        upgradedContract = _contract;
     }
 }
