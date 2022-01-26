@@ -12,7 +12,9 @@ contract BadgeToken is ERC721URIStorage {
     mapping(uint256 => uint256) private _idToDateMinted;
     address public badgeRegistry;
 
-    constructor(address _badgeRegistry) ERC721("Badge.", "BADGE") {}
+    constructor(address _badgeRegistry) ERC721("Badge.", "BADGE") {
+        badgeRegistry = _badgeRegistry;
+    }
 
     modifier entityRegistered() {
         bool registered = BadgeRegistry(badgeRegistry).isRegistered(msg.sender);

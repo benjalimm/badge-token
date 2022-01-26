@@ -15,8 +15,13 @@ contract Entity {
         GENESIS
     }
 
+    struct PermissionData {
+        PermissionTokenType permType;
+        uint256 permissionId;
+    }
+
     string public entityName;
-    mapping(address => PermissionTokenType) public permissionTokenHolders;
+    mapping(address => PermissionData) public permissionTokenHolders;
     address public badgeContract;
     address public permissionContract;
     address public upgradedContract;
@@ -32,21 +37,27 @@ contract Entity {
     constructor(
         string memory _entityName,
         address _badgeContract,
-        address _permissionContract
+        address _permissionContract,
+        string memory genesisTokenURI
     ) {
         console.log("Deployed new entity:", _entityName);
         entityName = _entityName;
         badgeContract = _badgeContract;
         permissionContract = _permissionContract;
 
-        assignPermissionTokenHolder(msg.sender, PermissionTokenType.GENESIS);
+        assignPermissionTokenHolder(
+            msg.sender,
+            PermissionTokenType.GENESIS,
+            genesisTokenURI
+        );
 
         emit EntityDeployed(address(this), _entityName, msg.sender);
     }
 
     modifier genAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender] == PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender].permType ==
+                PermissionTokenType.GENESIS,
             "Gen privileges required"
         );
         _;
@@ -54,9 +65,9 @@ contract Entity {
 
     modifier genOrSuperAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender] ==
+            permissionTokenHolders[msg.sender].permType ==
                 PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender] ==
+                permissionTokenHolders[msg.sender].permType ==
                 PermissionTokenType.GENESIS,
             "Sender has no super user privilege"
         );
@@ -65,10 +76,11 @@ contract Entity {
 
     modifier adminsOnly() {
         require(
-            permissionTokenHolders[msg.sender] == PermissionTokenType.ADMIN ||
-                permissionTokenHolders[msg.sender] ==
+            permissionTokenHolders[msg.sender].permType ==
+                PermissionTokenType.ADMIN ||
+                permissionTokenHolders[msg.sender].permType ==
                 PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender] ==
+                permissionTokenHolders[msg.sender].permType ==
                 PermissionTokenType.GENESIS,
             "Sender has no super user privilege"
         );
@@ -77,7 +89,8 @@ contract Entity {
 
     function assignPermissionTokenHolder(
         address _holder,
-        PermissionTokenType _type
+        PermissionTokenType _type,
+        string memory _tokenURI
     ) private {
         require(
             _type == PermissionTokenType.ADMIN ||
@@ -85,10 +98,12 @@ contract Entity {
                 _type == PermissionTokenType.GENESIS,
             "Invalid permission token type"
         );
-
-        permissionTokenHolders[_holder] = _type;
-
         // permissionTokenContract.createToken(_holder, _tokenURI);
+        uint256 tokenId = PermissionToken(permissionContract).mintToken(
+            _holder,
+            _tokenURI
+        );
+        permissionTokenHolders[_holder] = PermissionData(_type, tokenId);
     }
 
     function incrementDemeritPoints() external payable {

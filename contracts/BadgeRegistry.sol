@@ -3,20 +3,33 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "./Entity.sol";
+import "./BadgeToken.sol";
+import "./PermissionToken.sol";
 
 contract BadgeRegistry {
     mapping(address => string) public entities;
     address public badgeContract;
     address public permissionContract;
 
-    constructor(address _badgeContract, address _permissionContract) {
-        console.log("Successfully deployed");
-        badgeContract = _badgeContract;
-        permissionContract = _permissionContract;
+    constructor() {
+        badgeContract = address(new BadgeToken(address(this)));
+        permissionContract = address(new PermissionToken(address(this)));
+        console.log("Badge contract address: ");
+        console.log(badgeContract);
+        console.log("Permission contract address: ");
+        console.log(permissionContract);
     }
 
-    function deployEntity(string calldata name) external payable {
-        Entity e = new Entity(name, badgeContract, permissionContract);
+    function deployEntity(string calldata name, string calldata genesisTokenURI)
+        external
+        payable
+    {
+        Entity e = new Entity(
+            name,
+            badgeContract,
+            permissionContract,
+            genesisTokenURI
+        );
         entities[address(e)] = name;
     }
 
