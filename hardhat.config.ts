@@ -7,8 +7,10 @@ import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
+import fs from "fs";
 
 dotenv.config();
+const privateKey = fs.readFileSync(".secret").toString();
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -36,7 +38,7 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       url: "https://polygon-mumbai.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
-      accounts: [],
+      accounts: [privateKey],
     },
     mainnet: {
       url: "https://polygon-mainnet.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
