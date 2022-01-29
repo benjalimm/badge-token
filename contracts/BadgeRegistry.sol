@@ -7,18 +7,20 @@ import "./BadgeToken.sol";
 import "./PermissionToken.sol";
 
 contract BadgeRegistry {
-    mapping(address => string) public entities;
+    mapping(address => bool) public entities;
     address public badgeContract;
     address public permissionContract;
 
     constructor() {
         badgeContract = address(new BadgeToken(address(this)));
         permissionContract = address(new PermissionToken(address(this)));
-        console.log("Badge contract address: ");
-        console.log(badgeContract);
-        console.log("Permission contract address: ");
-        console.log(permissionContract);
     }
+
+    event EntityDeployed(
+        address entityAddress,
+        string entityName,
+        address genesisTokenHolder
+    );
 
     function deployEntity(string calldata name, string calldata genesisTokenURI)
         external
@@ -26,15 +28,18 @@ contract BadgeRegistry {
     {
         Entity e = new Entity(
             name,
+            address(this),
             badgeContract,
-            permissionContract,
-            genesisTokenURI
+            permissionContract
         );
-        entities[address(e)] = name;
+        entities[address(e)] = true;
+
+        e.assignGenesisTokenHolder(msg.sender, genesisTokenURI);
+
+        emit EntityDeployed(address(e), name, msg.sender);
     }
 
-    function isRegistered(address addr) external pure returns (bool) {
-        return (keccak256(abi.encodePacked(addr)) ==
-            keccak256(abi.encodePacked("")));
+    function isRegistered(address addr) external view returns (bool) {
+        return entities[addr];
     }
 }
