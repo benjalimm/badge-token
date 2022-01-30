@@ -3,33 +3,30 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./BadgeRegistry.sol";
 
 contract PermissionToken is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _ids;
-    address public ent;
+    address public badgeRegistry;
 
-    constructor(address _ent, string memory _name)
-        ERC721(join(_name, " - Permission Tokens"), join(_name, "_PERMISSION"))
+    constructor(address _badgeRegistry)
+        ERC721("Badge Permission Token", "BADGE_PERM")
     {
-        ent = _ent;
+        badgeRegistry = _badgeRegistry;
     }
 
-    function join(string memory a, string memory b)
-        internal
-        pure
-        returns (string memory)
-    {
-        return string(abi.encodePacked(a, b));
+    modifier entityRegistered() {
+        bool registered = BadgeRegistry(badgeRegistry).isRegistered(msg.sender);
+        require(registered, "Entity is not registered");
+        _;
     }
 
-    function createToken(address _owner, string memory tokenURI)
+    function mintToken(address _owner, string memory tokenURI)
         external
-        payable
+        entityRegistered
         returns (uint256)
     {
-        require(msg.sender == ent, "Not allowed");
-
         //1. Increment the id counter
         _ids.increment();
 
@@ -41,7 +38,6 @@ contract PermissionToken is ERC721URIStorage {
 
         //4. Set the tokenURI
         _setTokenURI(newItemId, tokenURI);
-
         return newItemId;
     }
 }
