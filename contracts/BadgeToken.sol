@@ -4,11 +4,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
 import "./BadgeRegistry.sol";
-import "./CustomStrings.sol";
 
 contract BadgeToken is ERC721URIStorage {
     using Counters for Counters.Counter;
-    using Strings for string;
     Counters.Counter private _tokenIds;
 
     // Mapping tokenId to time minted
