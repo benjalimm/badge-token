@@ -24,23 +24,23 @@ contract Entity {
     mapping(address => PermissionData) public permissionTokenHolders;
 
     address public badgeRegistry;
-    address public badgeContract;
     address public permissionContract;
     address public upgradedContract;
+
+    BadgeToken public badgeTokenContract;
 
     Counters.Counter public demeritPoints;
 
     constructor(
         string memory _entityName,
         address _badgeRegistry,
-        address _badgeContract,
         address _permissionContract
     ) {
         console.log("Deployed new entity:", _entityName);
         entityName = _entityName;
         badgeRegistry = _badgeRegistry;
-        badgeContract = _badgeContract;
         permissionContract = _permissionContract;
+        badgeTokenContract = new BadgeToken(address(this), _entityName);
     }
 
     modifier genAdminOnly() {
@@ -101,7 +101,7 @@ contract Entity {
 
     function incrementDemeritPoints() external payable {
         require(
-            msg.sender == address(badgeContract),
+            msg.sender == address(badgeTokenContract),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
@@ -116,5 +116,12 @@ contract Entity {
         genAdminOnly
     {
         upgradedContract = _contract;
+    }
+
+    function mintBadge(address _to, string memory _tokenURI)
+        external
+        adminsOnly
+    {
+        badgeTokenContract.mintBadge(_to, _tokenURI);
     }
 }

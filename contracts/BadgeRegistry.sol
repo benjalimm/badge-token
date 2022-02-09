@@ -12,7 +12,6 @@ contract BadgeRegistry {
     address public permissionContract;
 
     constructor() {
-        badgeContract = address(new BadgeToken(address(this)));
         permissionContract = address(new PermissionToken(address(this)));
     }
 
@@ -26,12 +25,7 @@ contract BadgeRegistry {
         external
         payable
     {
-        Entity e = new Entity(
-            name,
-            address(this),
-            badgeContract,
-            permissionContract
-        );
+        Entity e = new Entity(name, address(this), permissionContract);
         entities[address(e)] = true;
 
         e.assignGenesisTokenHolder(msg.sender, genesisTokenURI);

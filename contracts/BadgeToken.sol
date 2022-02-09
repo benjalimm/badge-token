@@ -1,4 +1,5 @@
 pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
@@ -11,15 +12,25 @@ contract BadgeToken is ERC721URIStorage {
     // Mapping tokenId to time minted
     mapping(uint256 => uint256) private _idToDateMinted;
     address public badgeRegistry;
+    address public entity;
 
-    constructor(address _badgeRegistry) ERC721("Badge.", "BADGE") {
-        badgeRegistry = _badgeRegistry;
+    constructor(address _entity, string memory _name)
+        ERC721(concat(_name, " - Badges"), "BADGE")
+    {
+        entity = _entity;
     }
 
-    modifier entityRegistered() {
-        bool registered = BadgeRegistry(badgeRegistry).isRegistered(msg.sender);
-        require(registered, "Entity is not registered");
+    modifier entityOnly() {
+        require(msg.sender == entity, "Only entity can access this method");
         _;
+    }
+
+    function concat(string memory s1, string memory s2)
+        private
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(s1, s2));
     }
 
     function _transfer(
@@ -27,7 +38,7 @@ contract BadgeToken is ERC721URIStorage {
         address to,
         uint256 tokenId
     ) internal override {
-        require(false, "Transfer not allowed");
+        require(false, "Badges are non-transferrable");
     }
 
     event BadgeBurned(address entityAddress, bool withPrejudice);
@@ -43,16 +54,15 @@ contract BadgeToken is ERC721URIStorage {
         emit BadgeBurned(msg.sender, true);
     }
 
-    function mintBadge(address userId, string memory tokenURI)
+    function mintBadge(address _to, string memory _tokenURI)
         external
         payable
-        entityRegistered
+        entityOnly
     {
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
-        _mint(userId, newItemId);
-        _setTokenURI(newItemId, tokenURI);
-        emit Transfer(msg.sender, userId, newItemId);
+        _mint(_to, newItemId);
+        _setTokenURI(newItemId, _tokenURI);
     }
 }
