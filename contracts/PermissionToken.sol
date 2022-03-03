@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./BadgeRegistry.sol";
+import "../interfaces/IBadgeRegistry.sol";
 
 contract PermissionToken is ERC721URIStorage {
     using Counters for Counters.Counter;
@@ -17,7 +17,9 @@ contract PermissionToken is ERC721URIStorage {
     }
 
     modifier entityRegistered() {
-        bool registered = BadgeRegistry(badgeRegistry).isRegistered(msg.sender);
+        bool registered = IBadgeRegistry(badgeRegistry).isRegistered(
+            msg.sender
+        );
         require(registered, "Entity is not registered");
         _;
     }

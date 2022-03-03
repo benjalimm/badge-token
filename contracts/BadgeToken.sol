@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
-import "./BadgeRegistry.sol";
 
 contract BadgeToken is ERC721URIStorage {
     using Counters for Counters.Counter;
@@ -11,7 +10,6 @@ contract BadgeToken is ERC721URIStorage {
 
     // Mapping tokenId to time minted
     mapping(uint256 => uint256) private _idToDateMinted;
-    address public badgeRegistry;
     address public entity;
 
     constructor(address _entity, string memory _name)
