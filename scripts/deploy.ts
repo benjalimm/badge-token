@@ -20,7 +20,9 @@ async function main() {
 
   // 1. Deploy badge contract
   const badgeContract = await ethers.getContractFactory("BadgeRegistry");
-  const badge = await badgeContract.deploy();
+  const badge = await badgeContract.deploy(
+    "0x9399BB24DBB5C4b782C70c2969F58716Ebbd6a3b"
+  );
   await badge.deployed();
   console.log("Badge deployed to:", badge.address);
 }

@@ -5,35 +5,54 @@ import "hardhat/console.sol";
 import "./Entity.sol";
 import "./BadgeToken.sol";
 import "./PermissionToken.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "../interfaces/IBadgeRegistry.sol";
 
-contract BadgeRegistry {
+contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
     mapping(address => bool) public entities;
-    address public badgeContract;
     address public permissionContract;
+    string public override versionRecipient = "2.2.0";
+    uint256 public badgePrice = 5;
+    uint256 public levelMultiplier = 2;
+    address public owner;
 
-    constructor() {
+    constructor(address _forwarder) {
+        _setTrustedForwarder(_forwarder);
+        owner = msg.sender;
         permissionContract = address(new PermissionToken(address(this)));
     }
-
-    event EntityDeployed(
-        address entityAddress,
-        string entityName,
-        address genesisTokenHolder
-    );
 
     function deployEntity(string calldata name, string calldata genesisTokenURI)
         external
         payable
+        override
     {
-        Entity e = new Entity(name, address(this), permissionContract);
+        Entity e = new Entity(name, address(this), trustedForwarder());
         entities[address(e)] = true;
 
-        e.assignGenesisTokenHolder(msg.sender, genesisTokenURI);
+        e.assignGenesisTokenHolder(_msgSender(), genesisTokenURI);
 
-        emit EntityDeployed(address(e), name, msg.sender);
+        emit EntityDeployed(address(e), name, _msgSender());
     }
 
-    function isRegistered(address addr) external view returns (bool) {
+    function isRegistered(address addr) external view override returns (bool) {
         return entities[addr];
+    }
+
+    function getPermContract() external view override returns (address) {
+        return permissionContract;
+    }
+
+    modifier ownerOnly() {
+        require(_msgSender() == owner, "Only owner can call this");
+        _;
+    }
+
+    function setBadgePrice(uint256 _price) external ownerOnly {
+        badgePrice = _price;
+    }
+
+    function getBadgePrice(uint256 level) external view returns (uint256) {
+        return badgePrice * (levelMultiplier ^ level);
     }
 }

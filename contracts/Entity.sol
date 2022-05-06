@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./BadgeToken.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "../interfaces/IBadgeRegistry.sol";
 import "./PermissionToken.sol";
 
-contract Entity {
+contract Entity is BaseRelayRecipient {
     using Counters for Counters.Counter;
 
     enum PermissionTokenType {
@@ -20,11 +22,12 @@ contract Entity {
         uint256 permissionId;
     }
 
+    string public override versionRecipient = "2.2.0";
+
     string public entityName;
     mapping(address => PermissionData) public permissionTokenHolders;
 
     address public badgeRegistry;
-    address public permissionContract;
     address public upgradedContract;
 
     BadgeToken public badgeTokenContract;
@@ -34,18 +37,18 @@ contract Entity {
     constructor(
         string memory _entityName,
         address _badgeRegistry,
-        address _permissionContract
+        address _forwarder
     ) {
         console.log("Deployed new entity:", _entityName);
+        _setTrustedForwarder(_forwarder);
         entityName = _entityName;
         badgeRegistry = _badgeRegistry;
-        permissionContract = _permissionContract;
         badgeTokenContract = new BadgeToken(address(this), _entityName);
     }
 
     modifier genAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender].permType ==
+            permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.GENESIS,
             "Gen privileges required"
         );
@@ -54,9 +57,9 @@ contract Entity {
 
     modifier genOrSuperAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender].permType ==
+            permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender].permType ==
+                permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.GENESIS,
             "Sender has no super user privilege"
         );
@@ -65,11 +68,11 @@ contract Entity {
 
     modifier adminsOnly() {
         require(
-            permissionTokenHolders[msg.sender].permType ==
+            permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.ADMIN ||
-                permissionTokenHolders[msg.sender].permType ==
+                permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender].permType ==
+                permissionTokenHolders[_msgSender()].permType ==
                 PermissionTokenType.GENESIS,
             "Sender has no super user privilege"
         );
@@ -81,6 +84,8 @@ contract Entity {
         PermissionTokenType _type,
         string memory _tokenURI
     ) private {
+        address permissionContract = IBadgeRegistry(badgeRegistry)
+            .getPermContract();
         uint256 tokenId = PermissionToken(permissionContract).mintToken(
             _holder,
             _tokenURI
@@ -91,7 +96,7 @@ contract Entity {
     function assignGenesisTokenHolder(address _holder, string memory _tokenURI)
         external
     {
-        require(msg.sender == badgeRegistry, "Only registry can call this");
+        require(_msgSender() == badgeRegistry, "Only registry can call this");
         assignPermissionTokenHolder(
             _holder,
             PermissionTokenType.GENESIS,
@@ -101,7 +106,7 @@ contract Entity {
 
     function incrementDemeritPoints() external payable {
         require(
-            msg.sender == address(badgeTokenContract),
+            _msgSender() == address(badgeTokenContract),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
