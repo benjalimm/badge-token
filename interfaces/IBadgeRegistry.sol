@@ -11,8 +11,6 @@ interface IBadgeRegistry {
         external
         payable;
 
-    function getPermContract() external view returns (address);
-
     event EntityDeployed(
         address entityAddress,
         string entityName,

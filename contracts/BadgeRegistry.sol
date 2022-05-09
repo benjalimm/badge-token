@@ -19,7 +19,6 @@ contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
     constructor(address _forwarder) {
         _setTrustedForwarder(_forwarder);
         owner = msg.sender;
-        permissionContract = address(new PermissionToken(address(this)));
     }
 
     function deployEntity(string calldata name, string calldata genesisTokenURI)
@@ -27,20 +26,14 @@ contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
         payable
         override
     {
-        Entity e = new Entity(name, address(this), trustedForwarder());
-        entities[address(e)] = true;
-
-        e.assignGenesisTokenHolder(_msgSender(), genesisTokenURI);
-
-        emit EntityDeployed(address(e), name, _msgSender());
+        // Entity e = new Entity(name, address(this), trustedForwarder());
+        // entities[address(e)] = true;
+        // e.assignGenesisTokenHolder(_msgSender(), genesisTokenURI);
+        // emit EntityDeployed(address(e), name, _msgSender());
     }
 
     function isRegistered(address addr) external view override returns (bool) {
         return entities[addr];
-    }
-
-    function getPermContract() external view override returns (address) {
-        return permissionContract;
     }
 
     modifier ownerOnly() {

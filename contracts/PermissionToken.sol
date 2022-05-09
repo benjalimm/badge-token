@@ -4,29 +4,38 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IPermissionToken.sol";
 
-contract PermissionToken is ERC721URIStorage {
+contract PermissionToken is ERC721URIStorage, IPermissionToken {
     using Counters for Counters.Counter;
     Counters.Counter private _ids;
     address public badgeRegistry;
+    address public entityAddress;
 
-    constructor(address _badgeRegistry)
-        ERC721("Badge Permission Token", "BADGE_PERM")
+    constructor(
+        string memory _entityName,
+        address _entityAddress,
+        string memory genesisTokenURI
+    )
+        ERC721(
+            string(abi.encodePacked(_entityName, " - Permission token")),
+            string(abi.encodePacked(_entityName, "PERM_TOKEN"))
+        )
     {
-        badgeRegistry = _badgeRegistry;
+        entityAddress = _entityAddress;
+        privateMint(msg.sender, genesisTokenURI);
     }
 
-    modifier entityRegistered() {
-        bool registered = IBadgeRegistry(badgeRegistry).isRegistered(
-            msg.sender
+    modifier entityOnly() {
+        require(
+            msg.sender == entityAddress,
+            "Only entity can access this method"
         );
-        require(registered, "Entity is not registered");
         _;
     }
 
-    function mintToken(address _owner, string memory tokenURI)
-        external
-        entityRegistered
+    function privateMint(address _owner, string memory tokenURI)
+        private
         returns (uint256)
     {
         //1. Increment the id counter
@@ -41,5 +50,19 @@ contract PermissionToken is ERC721URIStorage {
         //4. Set the tokenURI
         _setTokenURI(newItemId, tokenURI);
         return newItemId;
+    }
+
+    function mintAsEntity(address _owner, string memory tokenURI)
+        external
+        payable
+        override
+        entityOnly
+        returns (uint256)
+    {
+        return privateMint(_owner, tokenURI);
+    }
+
+    function getEntityAddress() external view override returns (address) {
+        return entityAddress;
     }
 }

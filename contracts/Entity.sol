@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./BadgeToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
-import "./PermissionToken.sol";
+import "../interfaces/IPermissionToken.sol";
 
 contract Entity is BaseRelayRecipient {
     using Counters for Counters.Counter;
@@ -26,13 +26,13 @@ contract Entity is BaseRelayRecipient {
 
     string public entityName;
     mapping(address => PermissionData) public permissionTokenHolders;
-
     address public badgeRegistry;
     address public upgradedContract;
-
     BadgeToken public badgeTokenContract;
-
     Counters.Counter public demeritPoints;
+    address public permissionContract;
+
+    event PermissionContractSet(address tokenAddress);
 
     constructor(
         string memory _entityName,
@@ -84,9 +84,11 @@ contract Entity is BaseRelayRecipient {
         PermissionTokenType _type,
         string memory _tokenURI
     ) private {
-        address permissionContract = IBadgeRegistry(badgeRegistry)
-            .getPermContract();
-        uint256 tokenId = PermissionToken(permissionContract).mintToken(
+        require(
+            permissionContract != address(0),
+            "Permission contract not set"
+        );
+        uint256 tokenId = IPermissionToken(permissionContract).mintAsEntity(
             _holder,
             _tokenURI
         );
@@ -128,5 +130,14 @@ contract Entity is BaseRelayRecipient {
         adminsOnly
     {
         badgeTokenContract.mintBadge(_to, _tokenURI);
+    }
+
+    function setPermissionContract(address _contract) external genAdminOnly {
+        require(
+            IPermissionToken(_contract).getEntityAddress() == address(this),
+            "PermToken not set for this entity"
+        );
+        permissionContract = _contract;
+        emit PermissionContractSet(_contract);
     }
 }
