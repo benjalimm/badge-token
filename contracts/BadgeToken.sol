@@ -48,11 +48,11 @@ contract BadgeToken is ERC721URIStorage {
             "Not allowed after 7 days"
         );
         _burn(tokenId);
-        Entity(msg.sender).incrementDemeritPoints();
+        Entity(entity).incrementDemeritPoints();
         emit BadgeBurned(msg.sender, true);
     }
 
-    function mintBadge(address _to, string memory _tokenURI)
+    function mintBadge(address _to, string calldata _tokenURI)
         external
         payable
         entityOnly

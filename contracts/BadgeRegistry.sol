@@ -8,7 +8,7 @@ import "./PermissionToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
 
-contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
+contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
     string public override versionRecipient = "2.2.0";
@@ -16,20 +16,17 @@ contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
     uint256 public levelMultiplier = 2;
     address public owner;
 
-    constructor(address _forwarder) {
-        _setTrustedForwarder(_forwarder);
+    constructor() {
         owner = msg.sender;
     }
 
-    function deployEntity(string calldata name, string calldata genesisTokenURI)
-        external
-        payable
-        override
-    {
-        // Entity e = new Entity(name, address(this), trustedForwarder());
-        // entities[address(e)] = true;
-        // e.assignGenesisTokenHolder(_msgSender(), genesisTokenURI);
-        // emit EntityDeployed(address(e), name, _msgSender());
+    function registerEntity(address entityAddress) external override {
+        require(
+            Entity(entityAddress).genesisUser() == msg.sender,
+            "Only genesis user can register entity"
+        );
+        entities[entityAddress] = true;
+        emit EntityRegistered(entityAddress);
     }
 
     function isRegistered(address addr) external view override returns (bool) {
@@ -37,7 +34,7 @@ contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
     }
 
     modifier ownerOnly() {
-        require(_msgSender() == owner, "Only owner can call this");
+        require(msg.sender == owner, "Only owner can call this");
         _;
     }
 

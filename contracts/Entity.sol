@@ -8,48 +8,36 @@ import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IPermissionToken.sol";
 
-contract Entity is BaseRelayRecipient {
+contract Entity {
     using Counters for Counters.Counter;
-
-    enum PermissionTokenType {
-        ADMIN,
+    // Enums
+    enum PermLevel {
+        GENESIS,
         SUPER_ADMIN,
-        GENESIS
+        ADMIN
     }
 
-    struct PermissionData {
-        PermissionTokenType permType;
-        uint256 permissionId;
-    }
-
-    string public override versionRecipient = "2.2.0";
-
-    string public entityName;
-    mapping(address => PermissionData) public permissionTokenHolders;
+    // State mgmt
+    address public genesisUser;
+    mapping(address => PermLevel) public permissionTokenHolders;
     address public badgeRegistry;
-    address public upgradedContract;
     BadgeToken public badgeTokenContract;
     Counters.Counter public demeritPoints;
     address public permissionContract;
 
+    // Events
     event PermissionContractSet(address tokenAddress);
 
-    constructor(
-        string memory _entityName,
-        address _badgeRegistry,
-        address _forwarder
-    ) {
+    constructor(string memory _entityName, address _badgeRegistry) {
         console.log("Deployed new entity:", _entityName);
-        _setTrustedForwarder(_forwarder);
-        entityName = _entityName;
+        assignGenesisTokenHolder(msg.sender);
         badgeRegistry = _badgeRegistry;
         badgeTokenContract = new BadgeToken(address(this), _entityName);
     }
 
     modifier genAdminOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Gen privileges required"
         );
         _;
@@ -57,10 +45,8 @@ contract Entity is BaseRelayRecipient {
 
     modifier genOrSuperAdminOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Sender has no super user privilege"
         );
         _;
@@ -68,12 +54,9 @@ contract Entity is BaseRelayRecipient {
 
     modifier adminsOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Sender has no super user privilege"
         );
         _;
@@ -81,34 +64,32 @@ contract Entity is BaseRelayRecipient {
 
     function assignPermissionTokenHolder(
         address _holder,
-        PermissionTokenType _type,
-        string memory _tokenURI
+        PermLevel _permLevel,
+        string calldata _tokenURI
     ) private {
         require(
             permissionContract != address(0),
             "Permission contract not set"
         );
-        uint256 tokenId = IPermissionToken(permissionContract).mintAsEntity(
-            _holder,
-            _tokenURI
-        );
-        permissionTokenHolders[_holder] = PermissionData(_type, tokenId);
+        if (_permLevel == PermLevel.GENESIS) {
+            genesisUser = _holder;
+        } else {
+            IPermissionToken(permissionContract).mintAsEntity(
+                _holder,
+                _tokenURI
+            );
+            permissionTokenHolders[_holder] = _permLevel;
+        }
     }
 
-    function assignGenesisTokenHolder(address _holder, string memory _tokenURI)
-        external
-    {
-        require(_msgSender() == badgeRegistry, "Only registry can call this");
-        assignPermissionTokenHolder(
-            _holder,
-            PermissionTokenType.GENESIS,
-            _tokenURI
-        );
+    function assignGenesisTokenHolder(address _holder) private {
+        require(msg.sender == badgeRegistry, "Only registry can call this");
+        assignPermissionTokenHolder(_holder, PermLevel.GENESIS, "");
     }
 
     function incrementDemeritPoints() external payable {
         require(
-            _msgSender() == address(badgeTokenContract),
+            msg.sender == address(badgeTokenContract),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
@@ -118,14 +99,7 @@ contract Entity is BaseRelayRecipient {
         return demeritPoints.current();
     }
 
-    function setUpgradedEntityContract(address _contract)
-        external
-        genAdminOnly
-    {
-        upgradedContract = _contract;
-    }
-
-    function mintBadge(address _to, string memory _tokenURI)
+    function mintBadge(address _to, string calldata _tokenURI)
         external
         adminsOnly
     {
