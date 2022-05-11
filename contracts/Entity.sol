@@ -65,7 +65,7 @@ contract Entity {
     function assignPermissionTokenHolder(
         address _holder,
         PermLevel _permLevel,
-        string calldata _tokenURI
+        string memory _tokenURI
     ) private {
         require(
             permissionContract != address(0),

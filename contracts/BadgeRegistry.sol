@@ -7,23 +7,23 @@ import "./BadgeToken.sol";
 import "./PermissionToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IEntityFactory.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    string public override versionRecipient = "2.2.0";
     uint256 public badgePrice = 5;
     uint256 public levelMultiplier = 2;
     address public owner;
+    address public entityFactory;
 
     constructor() {
         owner = msg.sender;
     }
 
-    function registerEntity(address entityAddress) external override {
-        require(
-            Entity(entityAddress).genesisUser() == msg.sender,
-            "Only genesis user can register entity"
+    function registerEntity(string calldata _entityName) external override {
+        address entityAddress = IEntityFactory(entityFactory).createEntity(
+            _entityName
         );
         entities[entityAddress] = true;
         emit EntityRegistered(entityAddress);
@@ -38,11 +38,16 @@ contract BadgeRegistry is IBadgeRegistry {
         _;
     }
 
+    function getBadgePrice(uint256 level) external view returns (uint256) {
+        return badgePrice * (levelMultiplier ^ level);
+    }
+
+    /// Owner only methods
     function setBadgePrice(uint256 _price) external ownerOnly {
         badgePrice = _price;
     }
 
-    function getBadgePrice(uint256 level) external view returns (uint256) {
-        return badgePrice * (levelMultiplier ^ level);
+    function setEntityFactory(address _entityFactory) external ownerOnly {
+        entityFactory = _entityFactory;
     }
 }

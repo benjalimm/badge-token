@@ -7,7 +7,7 @@ import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 interface IBadgeRegistry {
     function isRegistered(address addr) external view returns (bool);
 
-    function registerEntity(address entityAddress) external;
+    function registerEntity(string calldata _entityName) external;
 
     event EntityDeployed(
         address entityAddress,
