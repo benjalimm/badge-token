@@ -6,50 +6,56 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./BadgeToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
-import "./PermissionToken.sol";
+import "../interfaces/IBadgeTokenFactory.sol";
+import "../interfaces/IPermissionToken.sol";
+import "../interfaces/IPermissionTokenFactory.sol";
+import "../interfaces/IBadgeToken.sol";
 
-contract Entity is BaseRelayRecipient {
+contract Entity {
     using Counters for Counters.Counter;
 
-    enum PermissionTokenType {
+    enum PermLevel {
         ADMIN,
         SUPER_ADMIN,
         GENESIS
     }
 
-    struct PermissionData {
-        PermissionTokenType permType;
-        uint256 permissionId;
-    }
-
-    string public override versionRecipient = "2.2.0";
-
-    string public entityName;
-    mapping(address => PermissionData) public permissionTokenHolders;
-
+    // State mgmt
+    mapping(address => PermLevel) public permissionTokenHolders;
     address public badgeRegistry;
-    address public upgradedContract;
-
-    BadgeToken public badgeTokenContract;
-
+    address public badgeToken;
     Counters.Counter public demeritPoints;
+    address public permissionToken;
 
-    constructor(
-        string memory _entityName,
-        address _badgeRegistry,
-        address _forwarder
-    ) {
+    // Events
+    event PermissionTokenAssigned(
+        address entityAddress,
+        address assigner,
+        PermLevel assignerLevel,
+        address assignee,
+        PermLevel assigneeLevel
+    );
+
+    constructor(string memory _entityName, address _badgeRegistry) {
         console.log("Deployed new entity:", _entityName);
-        _setTrustedForwarder(_forwarder);
-        entityName = _entityName;
         badgeRegistry = _badgeRegistry;
-        badgeTokenContract = new BadgeToken(address(this), _entityName);
+
+        // Create Badge token contract
+        address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
+            .getBadgeTokenFactory();
+        badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
+            .createBadgeToken(_entityName);
+
+        // Create Permission token contract
+        address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
+            .getPermissionTokenFactory();
+        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
+            .createPermissionToken(_entityName);
     }
 
     modifier genAdminOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Gen privileges required"
         );
         _;
@@ -57,10 +63,8 @@ contract Entity is BaseRelayRecipient {
 
     modifier genOrSuperAdminOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Sender has no super user privilege"
         );
         _;
@@ -68,12 +72,9 @@ contract Entity is BaseRelayRecipient {
 
     modifier adminsOnly() {
         require(
-            permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.SUPER_ADMIN ||
-                permissionTokenHolders[_msgSender()].permType ==
-                PermissionTokenType.GENESIS,
+            permissionTokenHolders[msg.sender] == PermLevel.ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
+                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
             "Sender has no super user privilege"
         );
         _;
@@ -81,32 +82,34 @@ contract Entity is BaseRelayRecipient {
 
     function assignPermissionTokenHolder(
         address _holder,
-        PermissionTokenType _type,
-        string memory _tokenURI
+        PermLevel _permLevel,
+        string calldata _tokenURI
     ) private {
-        address permissionContract = IBadgeRegistry(badgeRegistry)
-            .getPermContract();
-        uint256 tokenId = PermissionToken(permissionContract).mintToken(
-            _holder,
-            _tokenURI
-        );
-        permissionTokenHolders[_holder] = PermissionData(_type, tokenId);
+        permissionTokenHolders[_holder] = _permLevel;
+        IPermissionToken(permissionToken).mintAsEntity(_holder, _tokenURI);
     }
 
-    function assignGenesisTokenHolder(address _holder, string memory _tokenURI)
-        external
-    {
-        require(_msgSender() == badgeRegistry, "Only registry can call this");
-        assignPermissionTokenHolder(
-            _holder,
-            PermissionTokenType.GENESIS,
-            _tokenURI
+    function assignPermissionToken(
+        address assignee,
+        PermLevel level,
+        string calldata tokenURI
+    ) external {
+        // 1. Get level of assigner
+        PermLevel assignerLevel = permissionTokenHolders[msg.sender];
+        require(assignerLevel > level, "Assigner has no permission");
+        assignPermissionTokenHolder(assignee, level, tokenURI);
+        emit PermissionTokenAssigned(
+            address(this),
+            msg.sender,
+            assignerLevel,
+            assignee,
+            level
         );
     }
 
-    function incrementDemeritPoints() external payable {
+    function incrementDemeritPoints() external {
         require(
-            _msgSender() == address(badgeTokenContract),
+            msg.sender == address(badgeToken),
             "Only badge token can increment demerit points"
         );
         demeritPoints.increment();
@@ -116,17 +119,11 @@ contract Entity is BaseRelayRecipient {
         return demeritPoints.current();
     }
 
-    function setUpgradedEntityContract(address _contract)
+    function mintBadge(address _to, string calldata _tokenURI)
         external
-        genAdminOnly
-    {
-        upgradedContract = _contract;
-    }
-
-    function mintBadge(address _to, string memory _tokenURI)
-        external
+        payable
         adminsOnly
     {
-        badgeTokenContract.mintBadge(_to, _tokenURI);
+        IBadgeToken(badgeToken).mintBadge(_to, _tokenURI);
     }
 }

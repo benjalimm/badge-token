@@ -7,52 +7,88 @@ import "./BadgeToken.sol";
 import "./PermissionToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IEntityFactory.sol";
 
-contract BadgeRegistry is BaseRelayRecipient, IBadgeRegistry {
+contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    string public override versionRecipient = "2.2.0";
     uint256 public badgePrice = 5;
     uint256 public levelMultiplier = 2;
     address public owner;
 
-    constructor(address _forwarder) {
-        _setTrustedForwarder(_forwarder);
+    //Factory address
+    address public entityFactory;
+    address public badgeTokenFactory;
+    address public permissionTokenFactory;
+
+    constructor() {
         owner = msg.sender;
-        permissionContract = address(new PermissionToken(address(this)));
     }
 
-    function deployEntity(string calldata name, string calldata genesisTokenURI)
-        external
-        payable
-        override
-    {
-        Entity e = new Entity(name, address(this), trustedForwarder());
-        entities[address(e)] = true;
-
-        e.assignGenesisTokenHolder(_msgSender(), genesisTokenURI);
-
-        emit EntityDeployed(address(e), name, _msgSender());
+    function registerEntity(
+        string calldata entityName,
+        string calldata genesisTokenURI
+    ) external override {
+        address entityAddress = IEntityFactory(entityFactory).createEntity(
+            entityName,
+            msg.sender,
+            genesisTokenURI
+        );
+        entities[entityAddress] = true;
+        emit EntityRegistered(entityAddress, entityName, msg.sender);
     }
 
     function isRegistered(address addr) external view override returns (bool) {
         return entities[addr];
     }
 
-    function getPermContract() external view override returns (address) {
-        return permissionContract;
-    }
-
     modifier ownerOnly() {
-        require(_msgSender() == owner, "Only owner can call this");
+        require(msg.sender == owner, "Only owner can call this");
         _;
-    }
-
-    function setBadgePrice(uint256 _price) external ownerOnly {
-        badgePrice = _price;
     }
 
     function getBadgePrice(uint256 level) external view returns (uint256) {
         return badgePrice * (levelMultiplier ^ level);
+    }
+
+    //Get methods
+    function getBadgeTokenFactory() external view override returns (address) {
+        return badgeTokenFactory;
+    }
+
+    function getEntityFactory() external view override returns (address) {
+        return entityFactory;
+    }
+
+    function getPermissionTokenFactory()
+        external
+        view
+        override
+        returns (address)
+    {
+        return permissionTokenFactory;
+    }
+
+    /// Owner only methods
+    function setBadgePrice(uint256 _price) external ownerOnly {
+        badgePrice = _price;
+    }
+
+    function setEntityFactory(address _entityFactory) external ownerOnly {
+        entityFactory = _entityFactory;
+    }
+
+    function setBadgeTokenFactory(address _badgeTokenFactory)
+        external
+        ownerOnly
+    {
+        badgeTokenFactory = _badgeTokenFactory;
+    }
+
+    function setPermissionTokenFactory(address _permissionTokenFactory)
+        external
+        ownerOnly
+    {
+        permissionTokenFactory = _permissionTokenFactory;
     }
 }
