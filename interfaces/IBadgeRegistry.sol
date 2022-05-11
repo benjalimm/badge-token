@@ -9,6 +9,12 @@ interface IBadgeRegistry {
 
     function registerEntity(string calldata _entityName) external;
 
+    function getBadgeTokenFactory() external view returns (address);
+
+    function getEntityFactory() external view returns (address);
+
+    function getPermissionTokenFactory() external view returns (address);
+
     event EntityDeployed(
         address entityAddress,
         string entityName,

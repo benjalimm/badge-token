@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
+import "../interfaces/IBadgeToken.sol";
 
-contract BadgeToken is ERC721URIStorage {
+contract BadgeToken is ERC721URIStorage, IBadgeToken {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
@@ -39,12 +40,10 @@ contract BadgeToken is ERC721URIStorage {
         require(false, "Badges are non-transferrable");
     }
 
-    event BadgeBurned(address entityAddress, bool withPrejudice);
-
-    function burnWithPrejudice(uint256 tokenId) external payable {
+    function burnWithPrejudice(uint256 tokenId) external payable override {
         require(msg.sender == ownerOf(tokenId), "Only owner can burn badge");
         require(
-            (block.timestamp - _idToDateMinted[tokenId]) <= (60 * 60 * 24 * 7),
+            (block.timestamp - _idToDateMinted[tokenId]) <= 604800,
             "Not allowed after 7 days"
         );
         _burn(tokenId);
@@ -55,6 +54,7 @@ contract BadgeToken is ERC721URIStorage {
     function mintBadge(address _to, string calldata _tokenURI)
         external
         payable
+        override
         entityOnly
     {
         _tokenIds.increment();
