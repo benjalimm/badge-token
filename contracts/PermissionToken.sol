@@ -12,18 +12,13 @@ contract PermissionToken is ERC721URIStorage, IPermissionToken {
     address public badgeRegistry;
     address public entityAddress;
 
-    constructor(
-        string memory _entityName,
-        address _entityAddress,
-        string memory genesisTokenURI
-    )
+    constructor(string memory _entityName, address _entityAddress)
         ERC721(
             string(abi.encodePacked(_entityName, " - Permission token")),
             string(abi.encodePacked(_entityName, "PERM_TOKEN"))
         )
     {
         entityAddress = _entityAddress;
-        privateMint(msg.sender, genesisTokenURI);
     }
 
     modifier entityOnly() {

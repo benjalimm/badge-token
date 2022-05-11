@@ -25,12 +25,17 @@ contract BadgeRegistry is IBadgeRegistry {
         owner = msg.sender;
     }
 
-    function registerEntity(string calldata _entityName) external override {
+    function registerEntity(
+        string calldata entityName,
+        string calldata genesisTokenURI
+    ) external override {
         address entityAddress = IEntityFactory(entityFactory).createEntity(
-            _entityName
+            entityName,
+            msg.sender,
+            genesisTokenURI
         );
         entities[entityAddress] = true;
-        emit EntityRegistered(entityAddress);
+        emit EntityRegistered(entityAddress, entityName, msg.sender);
     }
 
     function isRegistered(address addr) external view override returns (bool) {
@@ -71,5 +76,19 @@ contract BadgeRegistry is IBadgeRegistry {
 
     function setEntityFactory(address _entityFactory) external ownerOnly {
         entityFactory = _entityFactory;
+    }
+
+    function setBadgeTokenFactory(address _badgeTokenFactory)
+        external
+        ownerOnly
+    {
+        badgeTokenFactory = _badgeTokenFactory;
+    }
+
+    function setPermissionTokenFactory(address _permissionTokenFactory)
+        external
+        ownerOnly
+    {
+        permissionTokenFactory = _permissionTokenFactory;
     }
 }

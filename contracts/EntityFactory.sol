@@ -19,12 +19,11 @@ contract EntityFactory is IEntityFactory {
         _;
     }
 
-    function createEntity(string calldata _entityName)
-        external
-        override
-        badgeRegistryOnly
-        returns (address)
-    {
+    function createEntity(
+        string calldata _entityName,
+        address genesisUser,
+        string calldata genesisTokenURI
+    ) external override badgeRegistryOnly returns (address) {
         return address(new Entity(_entityName, badgeRegistry));
     }
 }

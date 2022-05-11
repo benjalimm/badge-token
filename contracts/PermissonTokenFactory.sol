@@ -6,11 +6,11 @@ import "../interfaces/IPermissionTokenFactory.sol";
 contract PermissionTokenFactory is IPermissionTokenFactory {
     address public badgeRegistry;
 
-    function createPermissionToken(
-        string calldata _entityName,
-        string calldata _genTokenURI
-    ) external override returns (address) {
-        return
-            address(new PermissionToken(_entityName, msg.sender, _genTokenURI));
+    function createPermissionToken(string calldata _entityName)
+        external
+        override
+        returns (address)
+    {
+        return address(new PermissionToken(_entityName, msg.sender));
     }
 }

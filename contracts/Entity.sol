@@ -13,15 +13,14 @@ import "../interfaces/IBadgeToken.sol";
 
 contract Entity {
     using Counters for Counters.Counter;
-    // Enums
+
     enum PermLevel {
-        GENESIS,
+        ADMIN,
         SUPER_ADMIN,
-        ADMIN
+        GENESIS
     }
 
     // State mgmt
-    address public genesisUser;
     mapping(address => PermLevel) public permissionTokenHolders;
     address public badgeRegistry;
     address public badgeToken;
@@ -29,9 +28,15 @@ contract Entity {
     address public permissionToken;
 
     // Events
-    event PermissionContractSet(address tokenAddress);
+    event PermissionTokenAssigned(
+        address entityAddress,
+        address assigner,
+        PermLevel assignerLevel,
+        address assignee,
+        PermLevel assigneeLevel
+    );
 
-    constructor(string memory _entityName, address _badgeRegistry) payable {
+    constructor(string memory _entityName, address _badgeRegistry) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
 
@@ -45,9 +50,7 @@ contract Entity {
         address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getPermissionTokenFactory();
         permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(_entityName, "");
-
-        assignGenesisTokenHolder(msg.sender);
+            .createPermissionToken(_entityName);
     }
 
     modifier genAdminOnly() {
@@ -80,23 +83,31 @@ contract Entity {
     function assignPermissionTokenHolder(
         address _holder,
         PermLevel _permLevel,
-        string memory _tokenURI
+        string calldata _tokenURI
     ) private {
-        require(permissionToken != address(0), "Permission contract not set");
-        if (_permLevel == PermLevel.GENESIS) {
-            genesisUser = _holder;
-        } else {
-            IPermissionToken(permissionToken).mintAsEntity(_holder, _tokenURI);
-            permissionTokenHolders[_holder] = _permLevel;
-        }
+        permissionTokenHolders[_holder] = _permLevel;
+        IPermissionToken(permissionToken).mintAsEntity(_holder, _tokenURI);
     }
 
-    function assignGenesisTokenHolder(address _holder) private {
-        require(msg.sender == badgeRegistry, "Only registry can call this");
-        assignPermissionTokenHolder(_holder, PermLevel.GENESIS, "");
+    function assignPermissionToken(
+        address assignee,
+        PermLevel level,
+        string calldata tokenURI
+    ) external {
+        // 1. Get level of assigner
+        PermLevel assignerLevel = permissionTokenHolders[msg.sender];
+        require(assignerLevel > level, "Assigner has no permission");
+        assignPermissionTokenHolder(assignee, level, tokenURI);
+        emit PermissionTokenAssigned(
+            address(this),
+            msg.sender,
+            assignerLevel,
+            assignee,
+            level
+        );
     }
 
-    function incrementDemeritPoints() external payable {
+    function incrementDemeritPoints() external {
         require(
             msg.sender == address(badgeToken),
             "Only badge token can increment demerit points"
@@ -114,14 +125,5 @@ contract Entity {
         adminsOnly
     {
         IBadgeToken(badgeToken).mintBadge(_to, _tokenURI);
-    }
-
-    function setPermissionContract(address _contract) external genAdminOnly {
-        require(
-            IPermissionToken(_contract).getEntityAddress() == address(this),
-            "PermToken not set for this entity"
-        );
-        permissionToken = _contract;
-        emit PermissionContractSet(_contract);
     }
 }

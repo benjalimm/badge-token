@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 interface IEntityFactory {
-    function createEntity(string calldata _entityName)
-        external
-        returns (address);
+    function createEntity(
+        string calldata _entityName,
+        address genesisUser,
+        string calldata genesisTokenURI
+    ) external returns (address);
 }
