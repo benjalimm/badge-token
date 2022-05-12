@@ -10,6 +10,7 @@ import "../interfaces/IBadgeTokenFactory.sol";
 import "../interfaces/IPermissionToken.sol";
 import "../interfaces/IPermissionTokenFactory.sol";
 import "../interfaces/IBadgeToken.sol";
+import "../interfaces/IBadgeXP.sol";
 
 contract Entity {
     using Counters for Counters.Counter;
@@ -75,7 +76,7 @@ contract Entity {
             permissionTokenHolders[msg.sender] == PermLevel.ADMIN ||
                 permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
                 permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
-            "Sender has no super user privilege"
+            "Sender has no admin privilege"
         );
         _;
     }
@@ -119,11 +120,16 @@ contract Entity {
         return demeritPoints.current();
     }
 
+    function getBadgeXPToken() private view returns (address) {
+        return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
+    }
+
     function mintBadge(address _to, string calldata _tokenURI)
         external
         payable
         adminsOnly
     {
         IBadgeToken(badgeToken).mintBadge(_to, _tokenURI);
+        IBadgeXP(getBadgeXPToken()).mint(10, _to);
     }
 }

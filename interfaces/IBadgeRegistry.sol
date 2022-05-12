@@ -18,6 +18,8 @@ interface IBadgeRegistry {
 
     function getPermissionTokenFactory() external view returns (address);
 
+    function getBadgeXPToken() external view returns (address);
+
     event EntityRegistered(
         address entityAddress,
         string entityName,

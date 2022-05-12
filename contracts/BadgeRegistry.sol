@@ -20,6 +20,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
+    address public badgeXPToken;
 
     constructor() {
         owner = msg.sender;
@@ -69,6 +70,10 @@ contract BadgeRegistry is IBadgeRegistry {
         return permissionTokenFactory;
     }
 
+    function getBadgeXPToken() external view override returns (address) {
+        return badgeXPToken;
+    }
+
     /// Owner only methods
     function setBadgePrice(uint256 _price) external ownerOnly {
         badgePrice = _price;
@@ -90,5 +95,9 @@ contract BadgeRegistry is IBadgeRegistry {
         ownerOnly
     {
         permissionTokenFactory = _permissionTokenFactory;
+    }
+
+    function setBadgeXPToken(address _badgeXPToken) external ownerOnly {
+        badgeXPToken = _badgeXPToken;
     }
 }
