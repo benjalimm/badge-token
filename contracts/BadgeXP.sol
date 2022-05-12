@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IBadgeXP.sol";
 
-contract BadgeXP is IERC20, IERC20Metadata {
+contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     uint256 public totalXP;
     mapping(address => uint256) public balance;
     address public badgeRegistry;
@@ -79,6 +80,7 @@ contract BadgeXP is IERC20, IERC20Metadata {
 
     function mint(uint256 amount, address recipient)
         external
+        override
         registeredEntitiesOnly
     {
         balance[recipient] += amount;
@@ -88,6 +90,7 @@ contract BadgeXP is IERC20, IERC20Metadata {
 
     function burn(uint256 amount, address recipient)
         external
+        override
         registeredEntitiesOnly
     {
         balance[recipient] -= amount;
