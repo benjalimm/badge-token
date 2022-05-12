@@ -5,22 +5,21 @@ import "hardhat/console.sol";
 import "./Entity.sol";
 import "./BadgeToken.sol";
 import "./PermissionToken.sol";
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntityFactory.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    uint256 public baseBadgePrice = 2655352639536000; // $5 in ETH
+    uint256 public baseBadgePrice = 100; // $5 in ETH
     uint256 public levelMultiplierX1000 = 2500;
     address public owner;
 
-    //Factory address
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
     address public badgeXPToken;
+    address public badgeGnosisSafe = address(0);
 
     constructor() {
         owner = msg.sender;
@@ -48,7 +47,12 @@ contract BadgeRegistry is IBadgeRegistry {
         _;
     }
 
-    function getBadgePrice(uint256 level) external view returns (uint256) {
+    function getBadgePrice(uint256 level)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return
             baseBadgePrice * ((levelMultiplierX1000 ^ level) / (1000 ^ level));
     }
@@ -73,6 +77,19 @@ contract BadgeRegistry is IBadgeRegistry {
 
     function getBadgeXPToken() external view override returns (address) {
         return badgeXPToken;
+    }
+
+    function getSafe() external view override returns (address) {
+        return badgeGnosisSafe;
+    }
+
+    function getLevelMultiplierX1000()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return levelMultiplierX1000;
     }
 
     /// Owner only methods

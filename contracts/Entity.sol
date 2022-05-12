@@ -80,7 +80,7 @@ contract Entity is IEntity {
         address assignee,
         PermLevel level,
         string calldata tokenURI
-    ) external {
+    ) external override {
         // 1. Get level of assigner
         PermLevel assignerLevel = permissionTokenHolders[msg.sender];
         require(assignerLevel > level, "Assigner has no permission");
@@ -115,6 +115,12 @@ contract Entity is IEntity {
         uint256 level,
         string calldata _tokenURI
     ) external payable override adminsOnly {
+        uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
+        require(msg.value >= badgePrice, "Not enough ETH");
+
+        address safe = IBadgeRegistry(badgeRegistry).getSafe();
+        (bool success, ) = safe.call{value: badgePrice}("");
+        require(success, "Call to safe failed");
         IBadgeToken(badgeToken).mintBadge(to, level, _tokenURI);
         IBadgeXP(getBadgeXPToken()).mint(10, to);
     }

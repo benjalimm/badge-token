@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./Entity.sol";
 import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
@@ -12,7 +11,8 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
     Counters.Counter private _tokenIds;
 
     // Mapping tokenId to time minted
-    mapping(uint256 => uint256) private _idToDateMinted;
+    mapping(uint256 => uint256) private tokenIdToLevel;
+    mapping(uint256 => uint256) private idToDateMinted;
     address public entity;
 
     constructor(address _entity, string memory _name)
@@ -45,11 +45,11 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
     function burnWithPrejudice(uint256 tokenId) external payable override {
         require(msg.sender == ownerOf(tokenId), "Only owner can burn badge");
         require(
-            (block.timestamp - _idToDateMinted[tokenId]) <= 604800,
+            (block.timestamp - idToDateMinted[tokenId]) <= 604800,
             "Not allowed after 7 days"
         );
         _burn(tokenId);
-        Entity(entity).incrementDemeritPoints();
+        IEntity(entity).incrementDemeritPoints();
         emit BadgeBurned(msg.sender, true);
     }
 
@@ -58,14 +58,13 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
         uint256 level,
         string calldata _tokenURI
     ) external payable override entityOnly {
-        address badgeRegistry = IEntity(entity).getBadgeRegistry();
-        uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
-
-        require(msg.value >= badgePrice, "Not enough ETH");
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
         _mint(_to, newItemId);
         _setTokenURI(newItemId, _tokenURI);
+
+        tokenIdToLevel[newItemId] = level;
+        idToDateMinted[newItemId] = block.timestamp;
     }
 }

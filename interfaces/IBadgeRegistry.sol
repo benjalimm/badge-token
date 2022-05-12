@@ -22,6 +22,10 @@ interface IBadgeRegistry {
 
     function getBadgePrice(uint256 level) external view returns (uint256);
 
+    function getLevelMultiplierX1000() external view returns (uint256);
+
+    function getSafe() external view returns (address);
+
     event EntityRegistered(
         address entityAddress,
         string entityName,
