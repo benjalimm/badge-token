@@ -20,6 +20,8 @@ interface IBadgeRegistry {
 
     function getBadgeXPToken() external view returns (address);
 
+    function getBadgePrice(uint256 level) external view returns (uint256);
+
     event EntityRegistered(
         address entityAddress,
         string entityName,

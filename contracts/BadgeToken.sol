@@ -4,6 +4,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Entity.sol";
 import "../interfaces/IBadgeToken.sol";
+import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IEntity.sol";
 
 contract BadgeToken is ERC721URIStorage, IBadgeToken {
     using Counters for Counters.Counter;
@@ -51,12 +53,15 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
         emit BadgeBurned(msg.sender, true);
     }
 
-    function mintBadge(address _to, string calldata _tokenURI)
-        external
-        payable
-        override
-        entityOnly
-    {
+    function mintBadge(
+        address _to,
+        uint256 level,
+        string calldata _tokenURI
+    ) external payable override entityOnly {
+        address badgeRegistry = IEntity(entity).getBadgeRegistry();
+        uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
+
+        require(msg.value >= badgePrice, "Not enough ETH");
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 

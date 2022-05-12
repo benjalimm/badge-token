@@ -12,8 +12,8 @@ import "../interfaces/IEntityFactory.sol";
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    uint256 public badgePrice = 5;
-    uint256 public levelMultiplier = 2;
+    uint256 public baseBadgePrice = 2655352639536000; // $5 in ETH
+    uint256 public levelMultiplierX1000 = 2500;
     address public owner;
 
     //Factory address
@@ -49,7 +49,8 @@ contract BadgeRegistry is IBadgeRegistry {
     }
 
     function getBadgePrice(uint256 level) external view returns (uint256) {
-        return badgePrice * (levelMultiplier ^ level);
+        return
+            baseBadgePrice * ((levelMultiplierX1000 ^ level) / (1000 ^ level));
     }
 
     //Get methods
@@ -76,7 +77,7 @@ contract BadgeRegistry is IBadgeRegistry {
 
     /// Owner only methods
     function setBadgePrice(uint256 _price) external ownerOnly {
-        badgePrice = _price;
+        baseBadgePrice = _price;
     }
 
     function setEntityFactory(address _entityFactory) external ownerOnly {
