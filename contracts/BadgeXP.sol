@@ -67,7 +67,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     }
 
     function decimals() external view override returns (uint8) {
-        return 18;
+        return 2;
     }
 
     modifier registeredEntitiesOnly() {
