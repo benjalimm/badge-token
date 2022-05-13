@@ -66,5 +66,7 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
 
         tokenIdToLevel[newItemId] = level;
         idToDateMinted[newItemId] = block.timestamp;
+
+        emit BadgeMinted(address(this), newItemId, level, _tokenURI);
     }
 }

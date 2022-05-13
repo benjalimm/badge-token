@@ -11,7 +11,7 @@ import "../interfaces/IEntityFactory.sol";
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    uint256 public baseBadgePrice = 100; // $5 in ETH
+    uint256 public baseBadgePrice = 2649000000000000;
     uint256 public levelMultiplierX1000 = 2500;
     address public owner;
 

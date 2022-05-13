@@ -9,5 +9,11 @@ interface IBadgeToken {
         string calldata _tokenURI
     ) external payable;
 
+    event BadgeMinted(
+        address entity,
+        uint256 tokenId,
+        uint256 level,
+        string tokenURI
+    );
     event BadgeBurned(address entityAddress, bool withPrejudice);
 }
