@@ -9,6 +9,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     uint256 public totalXP;
     mapping(address => uint256) public balance;
     address public badgeRegistry;
+    uint256 public baseXP = 1000;
 
     constructor(address _badgeRegistry) {
         badgeRegistry = _badgeRegistry;
@@ -48,7 +49,9 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         external
         override
         returns (bool)
-    {}
+    {
+        return false;
+    }
 
     function transferFrom(
         address sender,
@@ -78,14 +81,19 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         _;
     }
 
-    function mint(uint256 amount, address recipient)
+    function calculateXP(uint256 level) private view returns (uint256) {
+        return baseXP * level;
+    }
+
+    function mint(uint256 level, address recipient)
         external
         override
         registeredEntitiesOnly
     {
-        balance[recipient] += amount;
-        totalXP += amount;
-        emit Transfer(address(0), recipient, amount);
+        uint256 xp = calculateXP(level);
+        balance[recipient] += xp;
+        totalXP += xp;
+        emit Transfer(address(0), recipient, xp);
     }
 
     function burn(uint256 amount, address recipient)

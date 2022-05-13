@@ -11,15 +11,10 @@ import "../interfaces/IPermissionToken.sol";
 import "../interfaces/IPermissionTokenFactory.sol";
 import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeXP.sol";
+import "../interfaces/IEntity.sol";
 
-contract Entity {
+contract Entity is IEntity {
     using Counters for Counters.Counter;
-
-    enum PermLevel {
-        ADMIN,
-        SUPER_ADMIN,
-        GENESIS
-    }
 
     // State mgmt
     mapping(address => PermLevel) public permissionTokenHolders;
@@ -27,15 +22,6 @@ contract Entity {
     address public badgeToken;
     Counters.Counter public demeritPoints;
     address public permissionToken;
-
-    // Events
-    event PermissionTokenAssigned(
-        address entityAddress,
-        address assigner,
-        PermLevel assignerLevel,
-        address assignee,
-        PermLevel assigneeLevel
-    );
 
     constructor(string memory _entityName, address _badgeRegistry) {
         console.log("Deployed new entity:", _entityName);
@@ -94,7 +80,7 @@ contract Entity {
         address assignee,
         PermLevel level,
         string calldata tokenURI
-    ) external {
+    ) external override {
         // 1. Get level of assigner
         PermLevel assignerLevel = permissionTokenHolders[msg.sender];
         require(assignerLevel > level, "Assigner has no permission");
@@ -108,7 +94,7 @@ contract Entity {
         );
     }
 
-    function incrementDemeritPoints() external {
+    function incrementDemeritPoints() external override {
         require(
             msg.sender == address(badgeToken),
             "Only badge token can increment demerit points"
@@ -124,12 +110,23 @@ contract Entity {
         return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
     }
 
-    function mintBadge(address _to, string calldata _tokenURI)
-        external
-        payable
-        adminsOnly
-    {
-        IBadgeToken(badgeToken).mintBadge(_to, _tokenURI);
-        IBadgeXP(getBadgeXPToken()).mint(1000, _to);
+    function mintBadge(
+        address to,
+        uint256 level,
+        string calldata _tokenURI
+    ) external payable override adminsOnly {
+        require(level > 0, "Level cannot be 0");
+        uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
+        require(msg.value >= badgePrice, "Not enough ETH");
+
+        address safe = IBadgeRegistry(badgeRegistry).getSafe();
+        (bool success, ) = safe.call{value: badgePrice}("");
+        require(success, "Call to safe failed");
+        IBadgeToken(badgeToken).mintBadge(to, level, _tokenURI);
+        IBadgeXP(getBadgeXPToken()).mint(level, to);
+    }
+
+    function getBadgeRegistry() external view override returns (address) {
+        return badgeRegistry;
     }
 }

@@ -5,22 +5,21 @@ import "hardhat/console.sol";
 import "./Entity.sol";
 import "./BadgeToken.sol";
 import "./PermissionToken.sol";
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntityFactory.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
     address public permissionContract;
-    uint256 public badgePrice = 5;
-    uint256 public levelMultiplier = 2;
+    uint256 public baseBadgePrice = 2649000000000000;
+    uint256 public levelMultiplierX1000 = 2500;
     address public owner;
 
-    //Factory address
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
     address public badgeXPToken;
+    address public badgeGnosisSafe = address(0);
 
     constructor() {
         owner = msg.sender;
@@ -48,8 +47,14 @@ contract BadgeRegistry is IBadgeRegistry {
         _;
     }
 
-    function getBadgePrice(uint256 level) external view returns (uint256) {
-        return badgePrice * (levelMultiplier ^ level);
+    function getBadgePrice(uint256 level)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return
+            baseBadgePrice * ((levelMultiplierX1000 ^ level) / (1000 ^ level));
     }
 
     //Get methods
@@ -74,9 +79,22 @@ contract BadgeRegistry is IBadgeRegistry {
         return badgeXPToken;
     }
 
+    function getSafe() external view override returns (address) {
+        return badgeGnosisSafe;
+    }
+
+    function getLevelMultiplierX1000()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return levelMultiplierX1000;
+    }
+
     /// Owner only methods
     function setBadgePrice(uint256 _price) external ownerOnly {
-        badgePrice = _price;
+        baseBadgePrice = _price;
     }
 
     function setEntityFactory(address _entityFactory) external ownerOnly {
