@@ -11,6 +11,9 @@ contract PermissionTokenFactory is IPermissionTokenFactory {
         override
         returns (address)
     {
-        return address(new PermissionToken(_entityName, msg.sender));
+        address tokenAddress = address(
+            new PermissionToken(_entityName, msg.sender)
+        );
+        emit PermissionTokenDeployed(_entityName, tokenAddress);
     }
 }

@@ -8,4 +8,6 @@ interface IEntityFactory {
         address genesisUser,
         string calldata genesisTokenURI
     ) external returns (address);
+
+    event EntityDeployed(string entityName, address entityAddress);
 }

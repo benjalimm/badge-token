@@ -31,4 +31,12 @@ interface IBadgeRegistry {
         string entityName,
         address genesisTokenHolder
     );
+
+    event EntityFactorySet(address entityFactory);
+
+    event BadgeTokenFactorySet(address badgeTokenFactory);
+
+    event PermissionTokenFactorySet(address permissionTokenFactory);
+
+    event BadgeXPTokenSet(address badgeXPToken);
 }
