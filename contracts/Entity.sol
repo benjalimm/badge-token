@@ -130,6 +130,6 @@ contract Entity {
         adminsOnly
     {
         IBadgeToken(badgeToken).mintBadge(_to, _tokenURI);
-        IBadgeXP(getBadgeXPToken()).mint(10, _to);
+        IBadgeXP(getBadgeXPToken()).mint(1000, _to);
     }
 }

@@ -81,6 +81,7 @@ contract BadgeRegistry is IBadgeRegistry {
 
     function setEntityFactory(address _entityFactory) external ownerOnly {
         entityFactory = _entityFactory;
+        emit EntityFactorySet(_entityFactory);
     }
 
     function setBadgeTokenFactory(address _badgeTokenFactory)
@@ -88,6 +89,7 @@ contract BadgeRegistry is IBadgeRegistry {
         ownerOnly
     {
         badgeTokenFactory = _badgeTokenFactory;
+        emit BadgeTokenFactorySet(_badgeTokenFactory);
     }
 
     function setPermissionTokenFactory(address _permissionTokenFactory)
@@ -95,9 +97,11 @@ contract BadgeRegistry is IBadgeRegistry {
         ownerOnly
     {
         permissionTokenFactory = _permissionTokenFactory;
+        emit PermissionTokenFactorySet(_permissionTokenFactory);
     }
 
     function setBadgeXPToken(address _badgeXPToken) external ownerOnly {
         badgeXPToken = _badgeXPToken;
+        emit BadgeXPTokenSet(_badgeXPToken);
     }
 }

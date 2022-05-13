@@ -3,13 +3,13 @@ import "./BadgeToken.sol";
 import "../interfaces/IBadgeTokenFactory.sol";
 
 contract BadgeTokenFactory is IBadgeTokenFactory {
-    address public badgeRegistry;
-
-    function createBadgeToken(string calldata _entityName)
+    function createBadgeToken(string calldata entityName)
         external
         override
         returns (address)
     {
-        return address(new BadgeToken(msg.sender, _entityName));
+        address tokenAddress = address(new BadgeToken(msg.sender, entityName));
+        emit BadgeTokenDeployed(entityName, msg.sender, tokenAddress);
+        return tokenAddress;
     }
 }

@@ -12,9 +12,14 @@ import {
   PermissionTokenFactory,
 } from "../typechain";
 
+async function wait(seconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
+
 async function main() {
   // 1. Deploy badge registry
   let badgeRegistry: BadgeRegistry;
+  let badgeRegistryAddress: string;
 
   try {
     console.log("Attempting to deploy Badge registry...");
@@ -23,13 +28,16 @@ async function main() {
     );
     badgeRegistry = await badgeRegistryContract.deploy();
     await badgeRegistry.deployed();
+    badgeRegistryAddress = badgeRegistry.address;
     console.log(
       "Successfully deployed Badge Registry to address: ",
-      badgeRegistry.address
+      badgeRegistryAddress
     );
   } catch (e) {
     throw new Error(`Failed to deploy Badge registry due to error: ${e}`);
   }
+
+  await wait(10);
 
   // 2. Deploy and set entity factory
   let entityFactory: EntityFactory;
@@ -38,7 +46,7 @@ async function main() {
       "EntityFactory"
     );
     console.log("Attempting to deploy entity factory...");
-    entityFactory = await entityFactoryContract.deploy(badgeRegistry.address);
+    entityFactory = await entityFactoryContract.deploy(badgeRegistryAddress);
     await entityFactory.deployed();
     console.log(
       "Successfully deployed entity factory deployed to address: ",
@@ -47,6 +55,8 @@ async function main() {
   } catch (e) {
     throw new Error(`Failed to deploy entity factory due to error: ${e}`);
   }
+
+  await wait(10);
 
   // 2.1 Set entity factory in Badge registry
   try {
@@ -58,6 +68,8 @@ async function main() {
       `Failed to set entity factory in badge registry due to error: ${e}`
     );
   }
+
+  await wait(10);
 
   // 3. Deploy and set badge factory
   let badgeTokenFactory: BadgeTokenFactory;
@@ -76,6 +88,8 @@ async function main() {
     throw new Error(`Failed to deploy badge factory due to error: ${e}`);
   }
 
+  await wait(10);
+
   // 3.1 Set badge factory in Badge registry
   try {
     console.log("Attempting to set badge factory in badge registry...");
@@ -86,6 +100,8 @@ async function main() {
       "Failed to set badge factory in badge registry due to error: " + e
     );
   }
+
+  await wait(10);
 
   // 4. Deploy and set permission token factory
   let permissionTokenFactory: PermissionTokenFactory;
@@ -103,6 +119,8 @@ async function main() {
     );
   }
 
+  await wait(10);
+
   // 4.1 Set permission token factory in Badge registry
   try {
     console.log(
@@ -114,21 +132,25 @@ async function main() {
     console.log("Successfully set permission token factory in badge registry.");
   } catch (e) {
     throw new Error(
-      "Failed to set permission token factory in badge registry."
+      `Failed to set permission token factory in badge registry due to error: ${e}`
     );
   }
+
+  await wait(10);
 
   // 5. Deploy and set BadgeXP token
   let badgeXPToken: BadgeXP;
   try {
     const badgeXPTokenContract = await ethers.getContractFactory("BadgeXP");
     console.log("Attempting to deploy BadgeXP token...");
-    badgeXPToken = await badgeXPTokenContract.deploy(badgeRegistry.address);
+    badgeXPToken = await badgeXPTokenContract.deploy(badgeRegistryAddress);
     await badgeXPToken.deployed();
     console.log("Successfully deployed BadgeXP token.");
   } catch (e) {
     throw new Error(`Failed to deploy BadgeXP token due to error: ${e}`);
   }
+
+  await wait(10);
 
   // 5.1 Set BadgeXP Token
   try {
@@ -136,7 +158,9 @@ async function main() {
     await badgeRegistry.setBadgeXPToken(badgeXPToken.address);
     console.log("Successfully set BadgeXP token in badge registry.");
   } catch (e) {
-    throw new Error("Failed to set BadgeXP token in badge registry.");
+    throw new Error(
+      `Failed to set BadgeXP token in badge registry due to error: ${e}`
+    );
   }
 
   console.log("Successfully deployed Badge contracts!");
