@@ -115,7 +115,7 @@ contract Entity is IEntity {
         uint256 level,
         string calldata _tokenURI
     ) external payable override adminsOnly {
-        require(level > 0, "Level cannot be 0");
+        require(level >= 0, "Level cannot be less than 0");
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
         require(msg.value >= badgePrice, "Not enough ETH");
 

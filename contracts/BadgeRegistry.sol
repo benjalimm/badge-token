@@ -53,8 +53,12 @@ contract BadgeRegistry is IBadgeRegistry {
         override
         returns (uint256)
     {
-        return
-            baseBadgePrice * ((levelMultiplierX1000 ^ level) / (1000 ^ level));
+        if (level > 0) {
+            return
+                baseBadgePrice *
+                ((levelMultiplierX1000 ^ (level - 1)) / (1000 ^ (level - 1)));
+        }
+        return 0;
     }
 
     //Get methods

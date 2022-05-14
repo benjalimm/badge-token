@@ -112,7 +112,10 @@ async function main() {
     console.log("Attempting to deploy permission token factory...");
     permissionTokenFactory = await permissionTokenFactoryContract.deploy();
     await permissionTokenFactory.deployed();
-    console.log("Successfully deployed permission token factory.");
+    console.log(
+      "Successfully deployed permission token factory to address: ",
+      permissionTokenFactory.address
+    );
   } catch (e) {
     throw new Error(
       `Failed to deploy permission token factory due to error: ${e}`
@@ -145,7 +148,10 @@ async function main() {
     console.log("Attempting to deploy BadgeXP token...");
     badgeXPToken = await badgeXPTokenContract.deploy(badgeRegistryAddress);
     await badgeXPToken.deployed();
-    console.log("Successfully deployed BadgeXP token.");
+    console.log(
+      "Successfully deployed BadgeXP token to address: ",
+      badgeXPToken.address
+    );
   } catch (e) {
     throw new Error(`Failed to deploy BadgeXP token due to error: ${e}`);
   }
