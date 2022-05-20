@@ -84,7 +84,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     function calculateXP(uint256 level) private view returns (uint256) {
         if (level > 0) {
             uint256 xp = 0;
-            for (uint256 i = level; i > level; i--) {
+            for (uint256 i = level; i > 0; i--) {
                 xp += baseXP + ((25 * xp) / 100);
             }
             return xp;
