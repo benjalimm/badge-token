@@ -101,7 +101,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         uint256 xp = calculateXP(level);
         balance[recipient] += xp;
         totalXP += xp;
-        emit Transfer(address(0), recipient, xp);
+        emit Transfer(msg.sender, recipient, xp);
     }
 
     function burn(uint256 amount, address recipient)
