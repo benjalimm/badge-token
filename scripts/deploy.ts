@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 import {
+  BadgePriceCalculator,
   BadgeRegistry,
   BadgeTokenFactory,
   BadgeXP,
@@ -12,8 +13,14 @@ import {
   PermissionTokenFactory,
 } from "../typechain";
 
-async function wait(seconds: number) {
+async function wait(seconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
+
+const numberOfSecondsToWaitBetweenTransactions: number = 5;
+
+async function waitForSetAmountOfTime(): Promise<void> {
+  return wait(numberOfSecondsToWaitBetweenTransactions);
 }
 
 async function main() {
@@ -37,7 +44,7 @@ async function main() {
     throw new Error(`Failed to deploy Badge registry due to error: ${e}`);
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 2. Deploy and set entity factory
   let entityFactory: EntityFactory;
@@ -56,7 +63,7 @@ async function main() {
     throw new Error(`Failed to deploy entity factory due to error: ${e}`);
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 2.1 Set entity factory in Badge registry
   try {
@@ -69,7 +76,7 @@ async function main() {
     );
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 3. Deploy and set badge factory
   let badgeTokenFactory: BadgeTokenFactory;
@@ -88,7 +95,7 @@ async function main() {
     throw new Error(`Failed to deploy badge factory due to error: ${e}`);
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 3.1 Set badge factory in Badge registry
   try {
@@ -101,7 +108,7 @@ async function main() {
     );
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 4. Deploy and set permission token factory
   let permissionTokenFactory: PermissionTokenFactory;
@@ -122,7 +129,7 @@ async function main() {
     );
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 4.1 Set permission token factory in Badge registry
   try {
@@ -139,7 +146,7 @@ async function main() {
     );
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 5. Deploy and set BadgeXP token
   let badgeXPToken: BadgeXP;
@@ -156,7 +163,7 @@ async function main() {
     throw new Error(`Failed to deploy BadgeXP token due to error: ${e}`);
   }
 
-  await wait(10);
+  await waitForSetAmountOfTime();
 
   // 5.1 Set BadgeXP Token
   try {
@@ -166,6 +173,36 @@ async function main() {
   } catch (e) {
     throw new Error(
       `Failed to set BadgeXP token in badge registry due to error: ${e}`
+    );
+  }
+
+  // 6. Deploy Badge Price Calculator
+  let badgePriceCalculator: BadgePriceCalculator;
+  try {
+    const badgePriceCalculatorContract = await ethers.getContractFactory(
+      "BadgePriceCalculator"
+    );
+    console.log("Attempting to deploy BadgePriceCalculator...");
+    badgePriceCalculator = await badgePriceCalculatorContract.deploy();
+    await badgePriceCalculator.deployed();
+    console.log(
+      "Successfully deployed BadgePriceCalculator to address: ",
+      badgePriceCalculator.address
+    );
+  } catch (e) {
+    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 6.1 Set BadgePrice calculator
+  try {
+    console.log("Attempting to set BadgePriceCalculator in badge registry...");
+    await badgeRegistry.setBadgePriceCalculator(badgePriceCalculator.address);
+    console.log("Successfully set BadgePriceCalculator in badge registry.");
+  } catch (e) {
+    throw new Error(
+      `Failed to set BadgePriceCalculator in badge registry due to error: ${e}`
     );
   }
 

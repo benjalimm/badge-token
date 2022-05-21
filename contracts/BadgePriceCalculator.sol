@@ -10,6 +10,7 @@ contract BadgePriceCalculator is IBadgePriceCalculator {
     function calculateBadgePrice(uint256 level)
         external
         view
+        override
         returns (uint256)
     {
         if (level > 0) {
