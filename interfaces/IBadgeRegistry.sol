@@ -26,6 +26,18 @@ interface IBadgeRegistry {
 
     function getSafe() external view returns (address);
 
+    /* Owner only methods to set factories and contracts */
+    function setEntityFactory(address _entityFactory) external;
+
+    function setBadgeTokenFactory(address _badgeTokenFactory) external;
+
+    function setPermissionTokenFactory(address _permissionTokenFactory)
+        external;
+
+    function setBadgeXPToken(address _badgeXPToken) external;
+
+    function setBadgePriceCalculator(address _badgePriceCalculator) external;
+
     event EntityRegistered(
         address entityAddress,
         string entityName,
@@ -39,4 +51,6 @@ interface IBadgeRegistry {
     event PermissionTokenFactorySet(address permissionTokenFactory);
 
     event BadgeXPTokenSet(address badgeXPToken);
+
+    event BadgePriceCalculatorSet(address badgePriceCalculator);
 }

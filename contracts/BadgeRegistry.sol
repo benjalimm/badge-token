@@ -7,6 +7,7 @@ import "./BadgeToken.sol";
 import "./PermissionToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntityFactory.sol";
+import "../interfaces/IBadgePriceCalculator.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
     mapping(address => bool) public entities;
@@ -20,6 +21,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public permissionTokenFactory;
     address public badgeXPToken;
     address public badgeGnosisSafe = address(0);
+    address public badgePriceCalculator;
 
     constructor() {
         owner = msg.sender;
@@ -53,12 +55,10 @@ contract BadgeRegistry is IBadgeRegistry {
         override
         returns (uint256)
     {
-        if (level > 0) {
-            return
-                baseBadgePrice *
-                ((levelMultiplierX1000 ^ (level - 1)) / (1000 ^ (level - 1)));
-        }
-        return 0;
+        return
+            IBadgePriceCalculator(badgePriceCalculator).calculateBadgePrice(
+                level
+            );
     }
 
     //Get methods
@@ -96,18 +96,18 @@ contract BadgeRegistry is IBadgeRegistry {
         return levelMultiplierX1000;
     }
 
-    /// Owner only methods
-    function setBadgePrice(uint256 _price) external ownerOnly {
-        baseBadgePrice = _price;
-    }
-
-    function setEntityFactory(address _entityFactory) external ownerOnly {
+    function setEntityFactory(address _entityFactory)
+        external
+        override
+        ownerOnly
+    {
         entityFactory = _entityFactory;
         emit EntityFactorySet(_entityFactory);
     }
 
     function setBadgeTokenFactory(address _badgeTokenFactory)
         external
+        override
         ownerOnly
     {
         badgeTokenFactory = _badgeTokenFactory;
@@ -116,14 +116,28 @@ contract BadgeRegistry is IBadgeRegistry {
 
     function setPermissionTokenFactory(address _permissionTokenFactory)
         external
+        override
         ownerOnly
     {
         permissionTokenFactory = _permissionTokenFactory;
         emit PermissionTokenFactorySet(_permissionTokenFactory);
     }
 
-    function setBadgeXPToken(address _badgeXPToken) external ownerOnly {
+    function setBadgeXPToken(address _badgeXPToken)
+        external
+        override
+        ownerOnly
+    {
         badgeXPToken = _badgeXPToken;
         emit BadgeXPTokenSet(_badgeXPToken);
+    }
+
+    function setBadgePriceCalculator(address _badgePriceCalculator)
+        external
+        override
+        ownerOnly
+    {
+        badgePriceCalculator = _badgePriceCalculator;
+        emit BadgePriceCalculatorSet(badgePriceCalculator);
     }
 }
