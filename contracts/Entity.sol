@@ -23,21 +23,32 @@ contract Entity is IEntity {
     Counters.Counter public demeritPoints;
     address public permissionToken;
 
-    constructor(string memory _entityName, address _badgeRegistry) {
+    constructor(
+        string memory _entityName,
+        address _badgeRegistry,
+        address genesisUser,
+        string memory genesisTokenURI
+    ) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
 
-        // Create Badge token contract
+        // 1. Create Badge token contract
         address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getBadgeTokenFactory();
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
             .createBadgeToken(_entityName);
 
-        // Create Permission token contract
+        // 2. Create Permission token contract
         address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getPermissionTokenFactory();
         permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
             .createPermissionToken(_entityName);
+
+        // 3. Mint genesis token
+        IPermissionToken(permissionToken).mintAsEntity(
+            genesisUser,
+            genesisTokenURI
+        );
     }
 
     modifier genAdminOnly() {
