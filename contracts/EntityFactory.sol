@@ -23,9 +23,9 @@ contract EntityFactory is IEntityFactory {
         string calldata entityName,
         address genesisUser,
         string calldata genesisTokenURI
-    ) external override badgeRegistryOnly returns (address) {
-        address entityAddress = address(new Entity(entityName, badgeRegistry));
-        emit EntityDeployed(entityName, entityAddress);
-        return entityAddress;
+    ) external override badgeRegistryOnly returns (IEntity) {
+        IEntity entity = new Entity(entityName, badgeRegistry);
+        emit EntityDeployed(entityName, address(entity));
+        return entity;
     }
 }
