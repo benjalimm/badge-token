@@ -129,4 +129,12 @@ contract Entity is IEntity {
     function getBadgeRegistry() external view override returns (address) {
         return badgeRegistry;
     }
+
+    function getPermissionToken() external view override returns (address) {
+        return permissionToken;
+    }
+
+    function getBadgeToken() external view override returns (address) {
+        return badgeToken;
+    }
 }

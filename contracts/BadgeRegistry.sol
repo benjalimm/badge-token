@@ -8,11 +8,10 @@ import "./PermissionToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntityFactory.sol";
 import "../interfaces/IBadgePriceCalculator.sol";
+import "../interfaces/IEntity.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
-    mapping(address => bool) public entities;
     address public permissionContract;
-    uint256 public baseBadgePrice = 2649000000000000;
     uint256 public levelMultiplierX1000 = 2500;
     address public owner;
 
@@ -23,6 +22,10 @@ contract BadgeRegistry is IBadgeRegistry {
     address public badgeGnosisSafe = address(0);
     address public badgePriceCalculator;
 
+    mapping(address => bool) public entities;
+    mapping(address => address) public badgeTokenEntityReverseRecord;
+    mapping(address => address) public permTokenEntityReverseRecord;
+
     constructor() {
         owner = msg.sender;
     }
@@ -31,12 +34,25 @@ contract BadgeRegistry is IBadgeRegistry {
         string calldata entityName,
         string calldata genesisTokenURI
     ) external override {
-        address entityAddress = IEntityFactory(entityFactory).createEntity(
+        // 1. Deploy entity
+        IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
             msg.sender,
             genesisTokenURI
         );
+        address entityAddress = address(entity);
+
+        // 2. Set entity address in registry
         entities[entityAddress] = true;
+
+        // 3. Store badge token reverse record
+        badgeTokenEntityReverseRecord[entityAddress] = entity.getBadgeToken();
+
+        // 4. Store permission token reverse record
+        permTokenEntityReverseRecord[entityAddress] = entity
+            .getPermissionToken();
+
+        // 5. Emit entity registered
         emit EntityRegistered(entityAddress, entityName, msg.sender);
     }
 
@@ -61,7 +77,40 @@ contract BadgeRegistry is IBadgeRegistry {
             );
     }
 
-    //Get methods
+    /**
+     * Figure out which addresses are permission contracts
+     * @param addresses List of contract addresses to filter through
+     * @param tokenType Type of reverse record to filtler through (Badge token or Permission token)
+     * @return filteredAddresses Addresses that exist in the reverse record. Returned as an array fixed to their origianl index in the list.
+     */
+
+    function filterAddressesForEntityReverseRecord(
+        EntityReverseRecordType tokenType,
+        address[] calldata addresses
+    ) external view returns (address[] memory) {
+        // 1. Select the correct reverse record
+        mapping(address => address) storage reverseRecord = tokenType ==
+            EntityReverseRecordType.BadgeToken
+            ? badgeTokenEntityReverseRecord
+            : permTokenEntityReverseRecord;
+
+        address[] memory result = new address[](addresses.length);
+
+        // 2. Loop through addresses for filtering
+        uint256 i = 0;
+        for (i = i; i < addresses.length; i++) {
+            address addr = addresses[i];
+            address entityAddress = reverseRecord[addr];
+
+            // 3. If reverse record exists, add to result
+            if (entities[entityAddress]) {
+                result[i] = addr;
+            }
+        }
+        return result;
+    }
+
+    /** Getter methods */
     function getBadgeTokenFactory() external view override returns (address) {
         return badgeTokenFactory;
     }
@@ -96,6 +145,9 @@ contract BadgeRegistry is IBadgeRegistry {
         return levelMultiplierX1000;
     }
 
+    /**
+    Setter functions that will be called upon deployment of the Badge registry.
+     */
     function setEntityFactory(address _entityFactory)
         external
         override

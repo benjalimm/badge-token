@@ -5,6 +5,27 @@ import "hardhat/console.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 
 interface IBadgeRegistry {
+    enum EntityReverseRecordType {
+        BadgeToken,
+        PermissionToken
+    }
+
+    event EntityRegistered(
+        address entityAddress,
+        string entityName,
+        address genesisTokenHolder
+    );
+
+    event EntityFactorySet(address entityFactory);
+
+    event BadgeTokenFactorySet(address badgeTokenFactory);
+
+    event PermissionTokenFactorySet(address permissionTokenFactory);
+
+    event BadgeXPTokenSet(address badgeXPToken);
+
+    event BadgePriceCalculatorSet(address badgePriceCalculator);
+
     function isRegistered(address addr) external view returns (bool);
 
     function registerEntity(
@@ -37,20 +58,4 @@ interface IBadgeRegistry {
     function setBadgeXPToken(address _badgeXPToken) external;
 
     function setBadgePriceCalculator(address _badgePriceCalculator) external;
-
-    event EntityRegistered(
-        address entityAddress,
-        string entityName,
-        address genesisTokenHolder
-    );
-
-    event EntityFactorySet(address entityFactory);
-
-    event BadgeTokenFactorySet(address badgeTokenFactory);
-
-    event PermissionTokenFactorySet(address permissionTokenFactory);
-
-    event BadgeXPTokenSet(address badgeXPToken);
-
-    event BadgePriceCalculatorSet(address badgePriceCalculator);
 }

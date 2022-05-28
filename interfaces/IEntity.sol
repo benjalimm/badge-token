@@ -1,6 +1,20 @@
 pragma solidity ^0.8.0;
 
 interface IEntity {
+    enum PermLevel {
+        ADMIN,
+        SUPER_ADMIN,
+        GENESIS
+    }
+
+    event PermissionTokenAssigned(
+        address entityAddress,
+        address assigner,
+        PermLevel assignerLevel,
+        address assignee,
+        PermLevel assigneeLevel
+    );
+
     function incrementDemeritPoints() external;
 
     function mintBadge(
@@ -17,17 +31,7 @@ interface IEntity {
         string calldata tokenURI
     ) external;
 
-    enum PermLevel {
-        ADMIN,
-        SUPER_ADMIN,
-        GENESIS
-    }
+    function getPermissionToken() external view returns (address);
 
-    event PermissionTokenAssigned(
-        address entityAddress,
-        address assigner,
-        PermLevel assignerLevel,
-        address assignee,
-        PermLevel assigneeLevel
-    );
+    function getBadgeToken() external view returns (address);
 }
