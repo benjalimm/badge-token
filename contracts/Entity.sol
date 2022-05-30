@@ -16,6 +16,7 @@ import "../interfaces/IEntity.sol";
 contract Entity is IEntity {
     using Counters for Counters.Counter;
 
+    string public entityName;
     // State mgmt
     mapping(address => PermLevel) public permissionTokenHolders;
     address public badgeRegistry;
@@ -26,18 +27,13 @@ contract Entity is IEntity {
     constructor(string memory _entityName, address _badgeRegistry) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
+        entityName = _entityName;
 
         // Create Badge token contract
         address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getBadgeTokenFactory();
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
             .createBadgeToken(_entityName);
-
-        // Create Permission token contract
-        address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
-            .getPermissionTokenFactory();
-        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(_entityName);
     }
 
     modifier genAdminOnly() {
@@ -65,6 +61,23 @@ contract Entity is IEntity {
             "Sender has no admin privilege"
         );
         _;
+    }
+
+    function deployPermToken(string calldata genesisTokenURI)
+        external
+        genAdminOnly
+    {
+        // 1. Create Permission token contract
+        address permissionTokenFactoryAddress = IBadgeRegistry(badgeRegistry)
+            .getPermissionTokenFactory();
+        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
+            .createPermissionToken(entityName);
+
+        // 2. Mint genesis token
+        IPermissionToken(permissionToken).mintAsEntity(
+            msg.sender,
+            genesisTokenURI
+        );
     }
 
     function assignPermissionTokenHolder(
