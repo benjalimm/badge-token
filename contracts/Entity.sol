@@ -17,17 +17,23 @@ contract Entity is IEntity {
     using Counters for Counters.Counter;
 
     string public entityName;
+    address public genesisTokenHolder;
     // State mgmt
-    mapping(address => PermLevel) public permissionTokenHolders;
+
     address public badgeRegistry;
     address public badgeToken;
     Counters.Counter public demeritPoints;
     address public permissionToken;
 
-    constructor(string memory _entityName, address _badgeRegistry) {
+    constructor(
+        string memory _entityName,
+        address _badgeRegistry,
+        address _genesisTokenHolder
+    ) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
         entityName = _entityName;
+        genesisTokenHolder = _genesisTokenHolder;
 
         // Create Badge token contract
         address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
@@ -38,16 +44,19 @@ contract Entity is IEntity {
 
     modifier genAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
-            "Gen privileges required"
+            msg.sender == genesisTokenHolder,
+            "Only genesis token holder can call this"
         );
         _;
     }
 
     modifier genOrSuperAdminOnly() {
         require(
-            permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
+            IPermissionToken(permissionToken).getPermStatusForUser(
+                msg.sender
+            ) ==
+                PermLevel.SUPER_ADMIN ||
+                genesisTokenHolder == msg.sender,
             "Sender has no super user privilege"
         );
         _;
@@ -55,14 +64,24 @@ contract Entity is IEntity {
 
     modifier adminsOnly() {
         require(
-            permissionTokenHolders[msg.sender] == PermLevel.ADMIN ||
-                permissionTokenHolders[msg.sender] == PermLevel.SUPER_ADMIN ||
-                permissionTokenHolders[msg.sender] == PermLevel.GENESIS,
+            IPermissionToken(permissionToken).getPermStatusForUser(
+                msg.sender
+            ) ==
+                PermLevel.ADMIN ||
+                IPermissionToken(permissionToken).getPermStatusForUser(
+                    msg.sender
+                ) ==
+                PermLevel.SUPER_ADMIN ||
+                genesisTokenHolder == msg.sender,
             "Sender has no admin privilege"
         );
         _;
     }
 
+    /**
+     * @dev Creates a new permission token for the entity, which allows more than one user to issue Badges on behalf of the entity.
+     * @param genesisTokenURI The URI of the initial genesis token.
+     */
     function deployPermToken(string calldata genesisTokenURI)
         external
         genAdminOnly
@@ -76,17 +95,9 @@ contract Entity is IEntity {
         // 2. Mint genesis token
         IPermissionToken(permissionToken).mintAsEntity(
             msg.sender,
+            PermLevel.GENESIS,
             genesisTokenURI
         );
-    }
-
-    function assignPermissionTokenHolder(
-        address _holder,
-        PermLevel _permLevel,
-        string calldata _tokenURI
-    ) private {
-        permissionTokenHolders[_holder] = _permLevel;
-        IPermissionToken(permissionToken).mintAsEntity(_holder, _tokenURI);
     }
 
     function assignPermissionToken(
@@ -95,9 +106,14 @@ contract Entity is IEntity {
         string calldata tokenURI
     ) external override {
         // 1. Get level of assigner
-        PermLevel assignerLevel = permissionTokenHolders[msg.sender];
+        PermLevel assignerLevel = IPermissionToken(permissionToken)
+            .getPermStatusForUser(msg.sender);
         require(assignerLevel > level, "Assigner has no permission");
-        assignPermissionTokenHolder(assignee, level, tokenURI);
+        IPermissionToken(permissionToken).mintAsEntity(
+            assignee,
+            level,
+            tokenURI
+        );
         emit PermissionTokenAssigned(
             address(this),
             msg.sender,
