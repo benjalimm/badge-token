@@ -42,13 +42,13 @@ contract Entity is IEntity {
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
             .createBadgeToken(_entityName);
 
-        // 1. Create Permission token contract
-        address permissionTokenFactoryAddress = IBadgeRegistry(badgeRegistry)
+        // Create Permission token contract
+        address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getPermissionTokenFactory();
         permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(entityName);
+            .createPermissionToken(_entityName);
 
-        // 2. Mint genesis token
+        // Mint genesis token
         IPermissionToken(permissionToken).mintAsEntity(
             msg.sender,
             PermLevel.GENESIS,
