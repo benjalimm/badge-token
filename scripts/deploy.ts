@@ -11,7 +11,7 @@ import {
   BadgeXP,
   EntityFactory,
   PermissionTokenFactory,
-  BadgeRecoveryOracle__factory,
+  BadgeRecoveryOracle,
 } from "../typechain";
 
 async function wait(seconds: number): Promise<void> {
@@ -177,6 +177,8 @@ async function main() {
     );
   }
 
+  await waitForSetAmountOfTime();
+
   // 6. Deploy Badge Price Calculator
   let badgePriceCalculator: BadgePriceCalculator;
   try {
@@ -204,6 +206,38 @@ async function main() {
   } catch (e) {
     throw new Error(
       `Failed to set BadgePriceCalculator in badge registry due to error: ${e}`
+    );
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 7. Deploy Badge recovery oracle
+  let recoveryOracle: BadgeRecoveryOracle;
+  try {
+    const badgeRecoveryOracleContract = await ethers.getContractFactory(
+      "BadgeRecoveryOracle"
+    );
+    console.log("Attempting to deploy Badge recovery oracle...");
+    recoveryOracle = await badgeRecoveryOracleContract.deploy();
+    await recoveryOracle.deployed();
+    console.log(
+      "Successfully deployed BadgeRecoveryOracle to address: ",
+      recoveryOracle.address
+    );
+  } catch (e) {
+    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 7.1 Set Badge recovery oracle
+  try {
+    console.log("Attempting to set BadgeRecoveryOracle in badge registry...");
+    await badgeRegistry.recoveryOracle(recoveryOracle.address);
+    console.log("Successfully set BadgePriceCalculator in badge registry.");
+  } catch (e) {
+    throw new Error(
+      `Failed to set BadgePriceOracle in badge registry due to error: ${e}`
     );
   }
 
