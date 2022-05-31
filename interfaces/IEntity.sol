@@ -1,12 +1,7 @@
 pragma solidity ^0.8.0;
+import "./IPermissionToken.sol";
 
 interface IEntity {
-    enum PermLevel {
-        ADMIN,
-        SUPER_ADMIN,
-        GENESIS
-    }
-
     event PermissionTokenAssigned(
         address entityAddress,
         address assigner,

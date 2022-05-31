@@ -15,5 +15,6 @@ contract PermissionTokenFactory is IPermissionTokenFactory {
             new PermissionToken(_entityName, msg.sender)
         );
         emit PermissionTokenDeployed(_entityName, tokenAddress);
+        return tokenAddress;
     }
 }
