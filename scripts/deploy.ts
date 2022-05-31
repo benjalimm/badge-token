@@ -233,7 +233,7 @@ async function main() {
   // 7.1 Set Badge recovery oracle
   try {
     console.log("Attempting to set BadgeRecoveryOracle in badge registry...");
-    await badgeRegistry.recoveryOracle(recoveryOracle.address);
+    await badgeRegistry.setRecoveryOracle(recoveryOracle.address);
     console.log("Successfully set BadgePriceCalculator in badge registry.");
   } catch (e) {
     throw new Error(
