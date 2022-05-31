@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IBadgeXP.sol";
+import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     uint256 public totalXP;
@@ -112,5 +113,22 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         balance[recipient] -= amount;
         totalXP -= amount;
         emit Transfer(recipient, address(0), amount);
+    }
+
+    function recover(address from) external {
+        // 1. Get the badge recovery address for sender
+        address recoveryAddress = IBadgeRecoveryOracle(
+            IBadgeRegistry(badgeRegistry).getRecoveryOracle()
+        ).getRecoveryAddress(from);
+
+        // 2. Transfer if authorized
+        if (recoveryAddress == msg.sender) {
+            uint256 value = balance[from];
+            balance[msg.sender] = value;
+            balance[from] = 0;
+            emit Transfer(from, msg.sender, value);
+        } else {
+            revert Unauthorized("Only recovery address can recover Badge XP");
+        }
     }
 }

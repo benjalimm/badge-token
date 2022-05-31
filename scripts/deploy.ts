@@ -11,6 +11,7 @@ import {
   BadgeXP,
   EntityFactory,
   PermissionTokenFactory,
+  BadgeRecoveryOracle__factory,
 } from "../typechain";
 
 async function wait(seconds: number): Promise<void> {

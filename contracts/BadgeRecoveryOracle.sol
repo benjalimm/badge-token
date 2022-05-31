@@ -4,29 +4,29 @@ import "../interfaces/IBadgeRecoveryOracle.sol";
 contract BadgeRecoveryOracle is IBadgeRecoveryOracle {
     mapping(address => address) public recoveryAddressMap;
 
-    function isAddressSet(address _address) public view returns (bool) {
-        return recoveryAddress[_address] != address(0);
-    }
-
-    function setRecoveryAddress(address _recoveryAddress) external {
+    function setRecoveryAddress(address _recoveryAddress) external override {
         // 1. Make sure recovery address is not already set
-        require(!isAddressSet(msg.sender), "Recovery address already set");
+        address existingRecoveryAddress = recoveryAddressMap[_recoveryAddress];
+        if (existingRecoveryAddress != address(0)) {
+            revert RecoveryAddressAlreadySet(existingRecoveryAddress);
+        }
 
         // 2. Make sure sender and recoverAddress are different
-        require(
-            msg.sender != _recoveryAddress,
-            "Recovery address same as sender"
-        );
+        if (msg.sender == _recoveryAddress) {
+            revert RecoveryAddressSameAsSender();
+        }
 
-        recoveryAddress[msg.sender] = _recoveryAddress;
+        // 3. Set the recovery address
+        recoveryAddressMap[msg.sender] = _recoveryAddress;
         emit RecoveryAddressSet(msg.sender, _recoveryAddress);
     }
 
     function getRecoveryAddress(address _address)
         external
         view
+        override
         returns (address)
     {
-        return recoveryAddress[_address];
+        return recoveryAddressMap[_address];
     }
 }
