@@ -16,7 +16,7 @@ contract PermissionToken is ERC721URIStorage, IPermissionToken {
     constructor(string memory _entityName, address _entityAddress)
         ERC721(
             string(abi.encodePacked(_entityName, " - Permission token")),
-            string(abi.encodePacked(_entityName, "PERM_TOKEN"))
+            string(abi.encodePacked(_entityName, "_PERM_TOKEN"))
         )
     {
         entityAddress = _entityAddress;

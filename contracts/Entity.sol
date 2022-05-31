@@ -28,7 +28,8 @@ contract Entity is IEntity {
     constructor(
         string memory _entityName,
         address _badgeRegistry,
-        address _genesisTokenHolder
+        address _genesisTokenHolder,
+        string memory _genesisTokenURI
     ) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
@@ -40,6 +41,19 @@ contract Entity is IEntity {
             .getBadgeTokenFactory();
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
             .createBadgeToken(_entityName);
+
+        // 1. Create Permission token contract
+        address permissionTokenFactoryAddress = IBadgeRegistry(badgeRegistry)
+            .getPermissionTokenFactory();
+        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
+            .createPermissionToken(entityName);
+
+        // 2. Mint genesis token
+        IPermissionToken(permissionToken).mintAsEntity(
+            msg.sender,
+            PermLevel.GENESIS,
+            _genesisTokenURI
+        );
     }
 
     modifier genAdminOnly() {
@@ -76,28 +90,6 @@ contract Entity is IEntity {
             "Sender has no admin privilege"
         );
         _;
-    }
-
-    /**
-     * @dev Creates a new permission token for the entity, which allows more than one user to issue Badges on behalf of the entity.
-     * @param genesisTokenURI The URI of the initial genesis token.
-     */
-    function deployPermToken(string calldata genesisTokenURI)
-        external
-        genAdminOnly
-    {
-        // 1. Create Permission token contract
-        address permissionTokenFactoryAddress = IBadgeRegistry(badgeRegistry)
-            .getPermissionTokenFactory();
-        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(entityName);
-
-        // 2. Mint genesis token
-        IPermissionToken(permissionToken).mintAsEntity(
-            msg.sender,
-            PermLevel.GENESIS,
-            genesisTokenURI
-        );
     }
 
     function assignPermissionToken(

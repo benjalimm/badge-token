@@ -78,7 +78,7 @@ contract BadgeRegistry is IBadgeRegistry {
     }
 
     /**
-     * @dev Figure out which addresses are permission contracts
+     * Figure out which addresses are permission contracts
      * @param addresses List of contract addresses to filter through
      * @param tokenType Type of reverse record to filtler through (Badge token or Permission token)
      * @return filteredAddresses Addresses that exist in the reverse record. Returned as an array fixed to their origianl index in the list.
