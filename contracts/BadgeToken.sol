@@ -102,9 +102,9 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
         }
 
         // 2. Ensure recovery address has been set
-        if (recoveryAddress != msg.sender) {
+        if (recoveryAddress != msg.sender)
             revert Unauthorized("Only recovery address can recover badges");
-        }
+
         // 3. Loop through tokenIds and reset ids
         uint256 i = 0;
         uint256[] memory recoveredIds = new uint256[](ids.length);
