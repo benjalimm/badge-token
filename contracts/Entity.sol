@@ -28,6 +28,7 @@ contract Entity is IEntity {
     constructor(
         string memory _entityName,
         address _badgeRegistry,
+        address _recoveryOracle,
         address _genesisTokenHolder,
         string memory _genesisTokenURI
     ) {
@@ -40,7 +41,7 @@ contract Entity is IEntity {
         address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getBadgeTokenFactory();
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
-            .createBadgeToken(_entityName);
+            .createBadgeToken(_entityName, _recoveryOracle);
 
         // Create Permission token contract
         address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)

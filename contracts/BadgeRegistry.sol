@@ -38,6 +38,7 @@ contract BadgeRegistry is IBadgeRegistry {
         // 1. Deploy entity
         IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
+            recoveryOracle,
             msg.sender,
             genesisTokenURI
         );

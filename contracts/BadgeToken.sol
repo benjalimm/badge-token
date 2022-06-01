@@ -15,11 +15,15 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
     mapping(uint256 => uint256) private tokenIdToLevel;
     mapping(uint256 => uint256) private idToDateMinted;
     address public entity;
+    address public recoveryOracle;
 
-    constructor(address _entity, string memory _name)
-        ERC721(concat(_name, " - Badges"), "BADGE")
-    {
+    constructor(
+        address _entity,
+        address _recoveryOracle,
+        string memory _name
+    ) ERC721(concat(_name, " - Badges"), "BADGE") {
         entity = _entity;
+        recoveryOracle = _recoveryOracle;
     }
 
     modifier entityOnly() {
@@ -82,19 +86,26 @@ contract BadgeToken is ERC721URIStorage, IBadgeToken {
 
     function recover(address from, uint256[] calldata ids) external {
         // 1. Get recovery oracle address
-        address recoveryOracle = IBadgeRegistry(
-            IEntity(entity).getBadgeRegistry()
-        ).getRecoveryOracle();
+        (bool success, bytes memory result) = address(recoveryOracle).call(
+            abi.encodeWithSelector(
+                IBadgeRecoveryOracle.getRecoveryAddress.selector,
+                from
+            )
+        );
 
-        // 2. Get recovery address
-        address recoveryAddress = IBadgeRecoveryOracle(recoveryOracle)
-            .getRecoveryAddress(from);
+        if (!success) revert Failure("Call to recovery oracle failed");
 
-        // 3. Ensure recovery address has been set
+        // 1. 1 Convert bytes to address
+        address recoveryAddress;
+        assembly {
+            recoveryAddress := mload(add(result, 32))
+        }
+
+        // 2. Ensure recovery address has been set
         if (recoveryAddress != msg.sender) {
             revert Unauthorized("Only recovery address can recover badges");
         }
-        // 4. Loop through tokenIds and reset ids
+        // 3. Loop through tokenIds and reset ids
         uint256 i = 0;
         uint256[] memory recoveredIds = new uint256[](ids.length);
         for (i = i; i < ids.length; i++) {

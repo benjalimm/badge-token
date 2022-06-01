@@ -6,6 +6,7 @@ import "./IEntity.sol";
 interface IEntityFactory {
     function createEntity(
         string calldata _entityName,
+        address recoveryOracle,
         address genesisUser,
         string calldata genesisTokenURI
     ) external returns (IEntity);

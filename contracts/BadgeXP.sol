@@ -10,10 +10,12 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     uint256 public totalXP;
     mapping(address => uint256) public balance;
     address public badgeRegistry;
+    address public recoveryOracle;
     uint256 public baseXP = 1000;
 
-    constructor(address _badgeRegistry) {
+    constructor(address _badgeRegistry, address _recoveryOracle) {
         badgeRegistry = _badgeRegistry;
+        recoveryOracle = _recoveryOracle;
     }
 
     function totalSupply() external view override returns (uint256) {
@@ -115,14 +117,29 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         emit Transfer(recipient, address(0), amount);
     }
 
+    function bytesToAddress(bytes memory bys)
+        private
+        pure
+        returns (address addr)
+    {
+        assembly {
+            addr := mload(add(bys, 32))
+        }
+    }
+
     function recover(address from) external {
-        // 1. Get the badge recovery address for sender
-        address recoveryAddress = IBadgeRecoveryOracle(
-            IBadgeRegistry(badgeRegistry).getRecoveryOracle()
-        ).getRecoveryAddress(from);
+        // 1. Get recovery address from recovery oracle
+        (bool success, bytes memory result) = address(recoveryOracle).call(
+            abi.encodeWithSelector(
+                IBadgeRecoveryOracle.getRecoveryAddress.selector,
+                from
+            )
+        );
+
+        if (!success) revert Failure("Call to recovery oracle failed");
 
         // 2. Transfer if authorized
-        if (recoveryAddress == msg.sender) {
+        if (bytesToAddress(result) == msg.sender) {
             uint256 value = balance[from];
             balance[msg.sender] = value;
             balance[from] = 0;

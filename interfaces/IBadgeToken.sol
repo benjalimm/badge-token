@@ -18,6 +18,7 @@ interface IBadgeToken {
 
     error TransferBlocked();
     error Unauthorized(string message);
+    error Failure(string message);
 
     function burnWithPrejudice(uint256 tokenId) external payable;
 
