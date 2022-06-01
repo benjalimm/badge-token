@@ -300,12 +300,15 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
         emit BadgeMinted(address(this), newItemId, level, _tokenURI);
     }
 
-    function recover(address from, uint256[] calldata ids) external {
-        // 1. Get recovery oracle address
+    function recover(uint256 id) external {
+        // 1. Get owner of id
+        address owner = ownerOf(id);
+
+        // 2. Get recovery oracle address
         (bool success, bytes memory result) = address(recoveryOracle).call(
             abi.encodeWithSelector(
                 IBadgeRecoveryOracle.getRecoveryAddress.selector,
-                from
+                owner
             )
         );
 
@@ -321,21 +324,11 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
         if (recoveryAddress != msg.sender)
             revert Unauthorized("Only recovery address can recover badges");
 
-        // 3. Loop through tokenIds and reset ids
-        uint256 i = 0;
-        uint256[] memory recoveredIds = new uint256[](ids.length);
-        for (i = i; i < ids.length; i++) {
-            uint256 id = ids[i];
+        // 3. Transfer
+        _balances[owner] -= 1;
+        _balances[msg.sender] += 1;
+        _owners[id] = msg.sender;
 
-            if (ownerOf(id) != from)
-                revert Unauthorized("Badge not owned by address");
-
-            _balances[from] -= 1;
-            _balances[msg.sender] += 1;
-            _owners[id] = msg.sender;
-
-            emit Transfer(from, msg.sender, id);
-        }
-        emit RecoveryComplete(recoveredIds, msg.sender, recoveryAddress);
+        emit Transfer(owner, msg.sender, id);
     }
 }
