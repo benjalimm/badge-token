@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
@@ -12,6 +14,8 @@ import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
     using Counters for Counters.Counter;
+    using Address for address;
+    using Strings for uint256;
 
     // Token name
     string private _name;
@@ -314,21 +318,19 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
 
         if (!success) revert Failure("Call to recovery oracle failed");
 
-        // 1. 1 Convert bytes to address
+        // 3. Convert bytes to address
         address recoveryAddress;
         assembly {
             recoveryAddress := mload(add(result, 32))
         }
-
-        // 2. Ensure recovery address has been set
-        if (recoveryAddress != msg.sender)
+        // 4. Ensure recovery address has been set
+        if (recoveryAddress == msg.sender) {
+            _balances[owner] -= 1;
+            _balances[msg.sender] += 1;
+            _owners[id] = msg.sender;
+            emit Transfer(owner, msg.sender, id);
+        } else {
             revert Unauthorized("Only recovery address can recover badges");
-
-        // 3. Transfer
-        _balances[owner] -= 1;
-        _balances[msg.sender] += 1;
-        _owners[id] = msg.sender;
-
-        emit Transfer(owner, msg.sender, id);
+        }
     }
 }
