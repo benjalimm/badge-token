@@ -16,7 +16,7 @@ interface IBadgeToken {
         address recoveryAddress
     );
 
-    error TransferBlocked();
+    error Blocked(string message);
     error Unauthorized(string message);
     error Failure(string message);
 
