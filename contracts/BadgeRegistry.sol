@@ -21,6 +21,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public badgeXPToken;
     address public badgeGnosisSafe = address(0);
     address public badgePriceCalculator;
+    address public recoveryOracle;
 
     mapping(address => bool) public entities;
     mapping(address => address) public badgeTokenEntityReverseRecord;
@@ -37,6 +38,7 @@ contract BadgeRegistry is IBadgeRegistry {
         // 1. Deploy entity
         IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
+            recoveryOracle,
             msg.sender,
             genesisTokenURI
         );
@@ -145,21 +147,20 @@ contract BadgeRegistry is IBadgeRegistry {
         return levelMultiplierX1000;
     }
 
+    function getRecoveryOracle() external view override returns (address) {
+        return recoveryOracle;
+    }
+
     /**
     Setter functions that will be called upon deployment of the Badge registry.
      */
-    function setEntityFactory(address _entityFactory)
-        external
-        override
-        ownerOnly
-    {
+    function setEntityFactory(address _entityFactory) external ownerOnly {
         entityFactory = _entityFactory;
         emit EntityFactorySet(_entityFactory);
     }
 
     function setBadgeTokenFactory(address _badgeTokenFactory)
         external
-        override
         ownerOnly
     {
         badgeTokenFactory = _badgeTokenFactory;
@@ -168,28 +169,30 @@ contract BadgeRegistry is IBadgeRegistry {
 
     function setPermissionTokenFactory(address _permissionTokenFactory)
         external
-        override
         ownerOnly
     {
         permissionTokenFactory = _permissionTokenFactory;
         emit PermissionTokenFactorySet(_permissionTokenFactory);
     }
 
-    function setBadgeXPToken(address _badgeXPToken)
-        external
-        override
-        ownerOnly
-    {
+    function setBadgeXPToken(address _badgeXPToken) external ownerOnly {
         badgeXPToken = _badgeXPToken;
         emit BadgeXPTokenSet(_badgeXPToken);
     }
 
     function setBadgePriceCalculator(address _badgePriceCalculator)
         external
-        override
         ownerOnly
     {
         badgePriceCalculator = _badgePriceCalculator;
         emit BadgePriceCalculatorSet(badgePriceCalculator);
+    }
+
+    function setRecoveryOracle(address _recoveryOracle) external ownerOnly {
+        // Recovery oracle can only ever be set once
+        if (recoveryOracle != address(0)) {
+            recoveryOracle = _recoveryOracle;
+            emit RecoveryOracleSet(recoveryOracle);
+        }
     }
 }

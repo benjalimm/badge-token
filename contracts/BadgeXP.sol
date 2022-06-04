@@ -4,15 +4,18 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IBadgeXP.sol";
+import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     uint256 public totalXP;
     mapping(address => uint256) public balance;
     address public badgeRegistry;
+    address public recoveryOracle;
     uint256 public baseXP = 1000;
 
-    constructor(address _badgeRegistry) {
+    constructor(address _badgeRegistry, address _recoveryOracle) {
         badgeRegistry = _badgeRegistry;
+        recoveryOracle = _recoveryOracle;
     }
 
     function totalSupply() external view override returns (uint256) {
@@ -112,5 +115,37 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         balance[recipient] -= amount;
         totalXP -= amount;
         emit Transfer(recipient, address(0), amount);
+    }
+
+    function bytesToAddress(bytes memory bys)
+        private
+        pure
+        returns (address addr)
+    {
+        assembly {
+            addr := mload(add(bys, 32))
+        }
+    }
+
+    function recover(address from) external {
+        // 1. Get recovery address from recovery oracle
+        (bool success, bytes memory result) = address(recoveryOracle).call(
+            abi.encodeWithSelector(
+                IBadgeRecoveryOracle.getRecoveryAddress.selector,
+                from
+            )
+        );
+
+        if (!success) revert Failure("Call to recovery oracle failed");
+
+        // 2. Transfer if authorized
+        if (bytesToAddress(result) == msg.sender) {
+            uint256 value = balance[from];
+            balance[msg.sender] = value;
+            balance[from] = 0;
+            emit Transfer(from, msg.sender, value);
+        } else {
+            revert Unauthorized("Only recovery address can recover Badge XP");
+        }
     }
 }

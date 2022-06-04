@@ -26,6 +26,8 @@ interface IBadgeRegistry {
 
     event BadgePriceCalculatorSet(address badgePriceCalculator);
 
+    event RecoveryOracleSet(address recoveryOracle);
+
     function isRegistered(address addr) external view returns (bool);
 
     function registerEntity(
@@ -47,15 +49,5 @@ interface IBadgeRegistry {
 
     function getSafe() external view returns (address);
 
-    /* Owner only methods to set factories and contracts */
-    function setEntityFactory(address _entityFactory) external;
-
-    function setBadgeTokenFactory(address _badgeTokenFactory) external;
-
-    function setPermissionTokenFactory(address _permissionTokenFactory)
-        external;
-
-    function setBadgeXPToken(address _badgeXPToken) external;
-
-    function setBadgePriceCalculator(address _badgePriceCalculator) external;
+    function getRecoveryOracle() external view returns (address);
 }

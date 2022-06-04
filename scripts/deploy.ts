@@ -11,13 +11,14 @@ import {
   BadgeXP,
   EntityFactory,
   PermissionTokenFactory,
+  BadgeRecoveryOracle,
 } from "../typechain";
 
 async function wait(seconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
-const numberOfSecondsToWaitBetweenTransactions: number = 5;
+const numberOfSecondsToWaitBetweenTransactions: number = 10;
 
 async function waitForSetAmountOfTime(): Promise<void> {
   return wait(numberOfSecondsToWaitBetweenTransactions);
@@ -42,6 +43,38 @@ async function main() {
     );
   } catch (e) {
     throw new Error(`Failed to deploy Badge registry due to error: ${e}`);
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 7. Deploy Badge recovery oracle
+  let recoveryOracle: BadgeRecoveryOracle;
+  try {
+    const badgeRecoveryOracleContract = await ethers.getContractFactory(
+      "BadgeRecoveryOracle"
+    );
+    console.log("Attempting to deploy Badge recovery oracle...");
+    recoveryOracle = await badgeRecoveryOracleContract.deploy();
+    await recoveryOracle.deployed();
+    console.log(
+      "Successfully deployed BadgeRecoveryOracle to address: ",
+      recoveryOracle.address
+    );
+  } catch (e) {
+    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 7.1 Set Badge recovery oracle
+  try {
+    console.log("Attempting to set BadgeRecoveryOracle in badge registry...");
+    await badgeRegistry.setRecoveryOracle(recoveryOracle.address);
+    console.log("Successfully set BadgePriceCalculator in badge registry.");
+  } catch (e) {
+    throw new Error(
+      `Failed to set BadgePriceOracle in badge registry due to error: ${e}`
+    );
   }
 
   await waitForSetAmountOfTime();
@@ -153,7 +186,10 @@ async function main() {
   try {
     const badgeXPTokenContract = await ethers.getContractFactory("BadgeXP");
     console.log("Attempting to deploy BadgeXP token...");
-    badgeXPToken = await badgeXPTokenContract.deploy(badgeRegistryAddress);
+    badgeXPToken = await badgeXPTokenContract.deploy(
+      badgeRegistryAddress,
+      recoveryOracle.address
+    );
     await badgeXPToken.deployed();
     console.log(
       "Successfully deployed BadgeXP token to address: ",
@@ -175,6 +211,8 @@ async function main() {
       `Failed to set BadgeXP token in badge registry due to error: ${e}`
     );
   }
+
+  await waitForSetAmountOfTime();
 
   // 6. Deploy Badge Price Calculator
   let badgePriceCalculator: BadgePriceCalculator;

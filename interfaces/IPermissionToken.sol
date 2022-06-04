@@ -8,6 +8,10 @@ enum PermLevel {
 }
 
 interface IPermissionToken {
+    error Blocked(string message);
+    error Unauthorized(string message);
+    error Failure(string message);
+
     function getEntityAddress() external view returns (address);
 
     function mintAsEntity(
