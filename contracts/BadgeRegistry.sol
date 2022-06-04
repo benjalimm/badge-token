@@ -22,6 +22,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public badgeGnosisSafe = address(0);
     address public badgePriceCalculator;
     address public recoveryOracle;
+    address public userReverseRecordOracle;
 
     mapping(address => bool) public entities;
     mapping(address => address) public badgeTokenEntityReverseRecord;
@@ -39,6 +40,7 @@ contract BadgeRegistry is IBadgeRegistry {
         IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
             recoveryOracle,
+            userReverseRecordOracle,
             msg.sender,
             genesisTokenURI
         );

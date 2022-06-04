@@ -44,6 +44,7 @@ contract UserTokenReverseRecord is IUserTokenReverseRecord {
 
     function addBadgeReverseRecord(address user, address registry)
         external
+        override
         onlyBadgeEntity(registry)
     {
         if (!badgeTokenExistReverseRecord[user][msg.sender]) {
@@ -54,6 +55,7 @@ contract UserTokenReverseRecord is IUserTokenReverseRecord {
 
     function addPermTokenReverseRecord(address user, address registry)
         external
+        override
         onlyBadgeEntity(registry)
     {
         if (!permTokenExistReverseRecord[user][msg.sender]) {
@@ -62,9 +64,21 @@ contract UserTokenReverseRecord is IUserTokenReverseRecord {
         }
     }
 
+    function removeBadgeReverseRecord(address user, address registry)
+        external
+        override
+        onlyBadgeEntity(registry)
+    {
+        // if (badgeTokenExistReverseRecord[user][msg.sender]) {
+        //     badgeTokenListReverseRecord[user].pull(msg.sender);
+        //     badgeTokenExistReverseRecord[user][msg.sender] = false;
+        // }
+    }
+
     function getBadgeReverseRecord(address user)
         external
         view
+        override
         returns (address[] memory)
     {
         return badgeTokenListReverseRecord[user];
@@ -73,6 +87,7 @@ contract UserTokenReverseRecord is IUserTokenReverseRecord {
     function getPermTokenReverseRecord(address user)
         external
         view
+        override
         returns (address[] memory)
     {
         return permTokenReverseRecord[user];
@@ -81,16 +96,18 @@ contract UserTokenReverseRecord is IUserTokenReverseRecord {
     function hasUserBeenAwardedByBadgeToken(address user, address badgeToken)
         external
         view
+        override
         returns (bool)
     {
         return badgeTokenExistReverseRecord[user][badgeToken];
     }
 
-    function doesUserHavePermissionToken(address user, address badgeToken)
+    function doesUserHavePermissionToken(address user, address permToken)
         external
         view
+        override
         returns (bool)
     {
-        return permTokenExistReverseRecord[user][badgeToken];
+        return permTokenExistReverseRecord[user][permToken];
     }
 }

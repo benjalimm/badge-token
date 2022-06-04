@@ -22,6 +22,7 @@ contract EntityFactory is IEntityFactory {
     function createEntity(
         string calldata entityName,
         address recoveryOracle,
+        address userReverseRecordOracle,
         address genesisUser,
         string calldata genesisTokenURI
     ) external override badgeRegistryOnly returns (IEntity) {
@@ -29,6 +30,7 @@ contract EntityFactory is IEntityFactory {
             entityName,
             badgeRegistry,
             recoveryOracle,
+            userReverseRecordOracle,
             genesisUser,
             genesisTokenURI
         );

@@ -7,6 +7,7 @@ interface IEntityFactory {
     function createEntity(
         string calldata _entityName,
         address recoveryOracle,
+        address userReverseRecordOracle,
         address genesisUser,
         string calldata genesisTokenURI
     ) external returns (IEntity);

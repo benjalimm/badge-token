@@ -11,6 +11,7 @@ import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
+import "../interfaces/IUserTokenReverseRecord.sol";
 
 contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
     using Counters for Counters.Counter;
@@ -40,16 +41,19 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
     mapping(uint256 => uint256) private idToDateMinted;
     address public entity;
     address public recoveryOracle;
+    address public userTokenReverseRecord;
 
     constructor(
         address _entity,
         address _recoveryOracle,
+        address _userTokenReverseRecord,
         string memory name_
     ) {
         _name = concat(name_, " - Badges");
         _symbol = "BADGE";
         entity = _entity;
         recoveryOracle = _recoveryOracle;
+        userTokenReverseRecord = _userTokenReverseRecord;
     }
 
     /**
@@ -295,11 +299,24 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
+        // Mint Badge and set token URI
         _mint(_to, newItemId);
         _setTokenURI(newItemId, _tokenURI);
 
+        // Set level and time stamp
         tokenIdToLevel[newItemId] = level;
         idToDateMinted[newItemId] = block.timestamp;
+
+        // Set reverse record
+        (bool success, ) = address(userTokenReverseRecord).call(
+            abi.encodeWithSelector(
+                IUserTokenReverseRecord.addBadgeReverseRecord.selector,
+                _to,
+                IEntity(entity).getBadgeRegistry()
+            )
+        );
+
+        if (!success) revert Unauthorized("Failed to add reverse record");
 
         emit BadgeMinted(address(this), newItemId, level, _tokenURI);
     }

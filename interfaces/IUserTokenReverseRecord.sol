@@ -22,7 +22,7 @@ interface IUserTokenReverseRecord {
         view
         returns (bool);
 
-    function doesUserHavePermissionToken(address user, address badgeToken)
+    function doesUserHavePermissionToken(address user, address permToken)
         external
         view
         returns (bool);
