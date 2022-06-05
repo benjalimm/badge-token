@@ -197,4 +197,12 @@ contract BadgeRegistry is IBadgeRegistry {
             emit RecoveryOracleSet(recoveryOracle);
         }
     }
+
+    function setUserReverseRecordOracle(address _userReverseRecordOracle)
+        external
+        ownerOnly
+    {
+        userReverseRecordOracle = _userReverseRecordOracle;
+        emit UserReverseRecordOracleSet(userReverseRecordOracle);
+    }
 }

@@ -28,6 +28,8 @@ interface IBadgeRegistry {
 
     event RecoveryOracleSet(address recoveryOracle);
 
+    event UserReverseRecordOracleSet(address userReverseRecordOracle);
+
     function isRegistered(address addr) external view returns (bool);
 
     function registerEntity(

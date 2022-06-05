@@ -20,7 +20,7 @@ interface IBadgeToken {
     error Unauthorized(string message);
     error Failure(string message);
 
-    function burnWithPrejudice(uint256 tokenId) external payable;
+    function burn(uint256 tokenId, bool withPrejudice) external payable;
 
     function mintBadge(
         address _to,

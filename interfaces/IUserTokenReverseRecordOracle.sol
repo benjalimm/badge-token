@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-interface IUserTokenReverseRecord {
+interface IUserTokenReverseRecordOracle {
     error Unauthorized(string message);
 
     function addBadgeReverseRecord(address user, address registry) external;
@@ -17,13 +17,17 @@ interface IUserTokenReverseRecord {
         view
         returns (address[] memory);
 
-    function hasUserBeenAwardedByBadgeToken(address user, address badgeToken)
+    function doesBadgeReverseRecordExists(address user, address badgeToken)
         external
         view
         returns (bool);
 
-    function doesUserHavePermissionToken(address user, address permToken)
+    function doesPermReverseRecordExists(address user, address permToken)
         external
         view
         returns (bool);
+
+    function removeBadgeReverseRecord(address user, address registry) external;
+
+    function removePermReverseRecord(address user, address registry) external;
 }

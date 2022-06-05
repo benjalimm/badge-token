@@ -12,6 +12,7 @@ import {
   EntityFactory,
   PermissionTokenFactory,
   BadgeRecoveryOracle,
+  UserTokenReverseRecordOracle,
 } from "../typechain";
 
 async function wait(seconds: number): Promise<void> {
@@ -70,10 +71,47 @@ async function main() {
   try {
     console.log("Attempting to set BadgeRecoveryOracle in badge registry...");
     await badgeRegistry.setRecoveryOracle(recoveryOracle.address);
-    console.log("Successfully set BadgePriceCalculator in badge registry.");
+    console.log("Successfully set BadgeRecoveryOracle in badge registry.");
   } catch (e) {
     throw new Error(
       `Failed to set BadgePriceOracle in badge registry due to error: ${e}`
+    );
+  }
+
+  await waitForSetAmountOfTime();
+
+  let userTokenReverseRecordOracle: UserTokenReverseRecordOracle;
+  try {
+    const userTokenReverseRecordOracleContract =
+      await ethers.getContractFactory("UserTokenReverseRecordOracle");
+    console.log("Attempting to deploy UserTokenReverseRecordOracle...");
+    userTokenReverseRecordOracle =
+      await userTokenReverseRecordOracleContract.deploy(badgeRegistry.address);
+    await userTokenReverseRecordOracle.deployed();
+    console.log(
+      "Successfully deployed UserTokenReverseRecordOracle to address: ",
+      userTokenReverseRecordOracle.address
+    );
+  } catch (e) {
+    throw new Error(
+      `Failed to deploy UserTokenReverseRecordOracle due to error: ${e}`
+    );
+  }
+
+  await waitForSetAmountOfTime();
+
+  // 6.1 Set BadgePrice calculator
+  try {
+    console.log(
+      "Attempting to set UserReverseRecordOracle in badge registry..."
+    );
+    await badgeRegistry.setUserReverseRecordOracle(
+      userTokenReverseRecordOracle.address
+    );
+    console.log("Successfully set UserReverseRecordOracle in badge registry.");
+  } catch (e) {
+    throw new Error(
+      `Failed to set UserReverseRecordOracle in badge registry due to error: ${e}`
     );
   }
 

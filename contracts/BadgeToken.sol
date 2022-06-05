@@ -11,7 +11,7 @@ import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
-import "../interfaces/IUserTokenReverseRecord.sol";
+import "../interfaces/IUserTokenReverseRecordOracle.sol";
 
 contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
     using Counters for Counters.Counter;
@@ -280,15 +280,23 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
         return string(abi.encodePacked(s1, s2));
     }
 
-    function burnWithPrejudice(uint256 tokenId) external payable override {
+    function burn(uint256 tokenId, bool withPrejudice)
+        external
+        payable
+        override
+    {
         require(msg.sender == ownerOf(tokenId), "Only owner can burn badge");
-        require(
-            (block.timestamp - idToDateMinted[tokenId]) <= 604800,
-            "Not allowed after 7 days"
-        );
+
+        if (withPrejudice) {
+            require(
+                (block.timestamp - idToDateMinted[tokenId]) <= 604800,
+                "Not allowed after 7 days"
+            );
+            IEntity(entity).incrementDemeritPoints();
+        }
+
         _burn(tokenId);
-        IEntity(entity).incrementDemeritPoints();
-        emit BadgeBurned(msg.sender, true);
+        emit BadgeBurned(msg.sender, withPrejudice);
     }
 
     function mintBadge(
@@ -310,7 +318,7 @@ contract BadgeToken is ERC165, IERC721, IERC721Metadata, IBadgeToken {
         // Set reverse record
         (bool success, ) = address(userTokenReverseRecord).call(
             abi.encodeWithSelector(
-                IUserTokenReverseRecord.addBadgeReverseRecord.selector,
+                IUserTokenReverseRecordOracle.addBadgeReverseRecord.selector,
                 _to,
                 IEntity(entity).getBadgeRegistry()
             )
