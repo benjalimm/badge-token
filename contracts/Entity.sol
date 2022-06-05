@@ -37,19 +37,19 @@ contract Entity is IEntity {
         entityName = _entityName;
         genesisTokenHolder = _genesisTokenHolder;
 
-        // Create Badge token contract
+        // 1. Create Badge token contract
         address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getBadgeTokenFactory();
         badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
             .createBadgeToken(_entityName, _recoveryOracle);
 
-        // Create Permission token contract
+        // 2. Create Permission token contract
         address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
             .getPermissionTokenFactory();
         permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
             .createPermissionToken(_entityName);
 
-        // Mint genesis token
+        // 3. Mint genesis token
         IPermissionToken(permissionToken).mintAsEntity(
             msg.sender,
             PermLevel.GENESIS,
@@ -57,6 +57,7 @@ contract Entity is IEntity {
         );
     }
 
+    // ** Modifiers **//
     modifier genAdminOnly() {
         require(
             msg.sender == genesisTokenHolder,
@@ -124,14 +125,6 @@ contract Entity is IEntity {
         demeritPoints.increment();
     }
 
-    function getDemeritPoints() public view returns (uint256) {
-        return demeritPoints.current();
-    }
-
-    function getBadgeXPToken() private view returns (address) {
-        return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
-    }
-
     function mintBadge(
         address to,
         uint256 level,
@@ -148,6 +141,7 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).mint(level, to);
     }
 
+    /** Getter functions **/
     function getBadgeRegistry() external view override returns (address) {
         return badgeRegistry;
     }
@@ -159,4 +153,15 @@ contract Entity is IEntity {
     function getBadgeToken() external view override returns (address) {
         return badgeToken;
     }
+
+    function getDemeritPoints() public view returns (uint256) {
+        return demeritPoints.current();
+    }
+
+    function getBadgeXPToken() private view returns (address) {
+        return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
+    }
+
+    /** Setter functions **/
+    function setNewEntity(address _entity) external genOrSuperAdminOnly {}
 }

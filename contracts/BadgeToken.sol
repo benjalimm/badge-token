@@ -10,12 +10,12 @@ import "./NonTransferableERC721.sol";
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
 
-    // Token id
+    // ** Token info **//
     Counters.Counter private _tokenIds;
-
-    // Mapping tokenId to time minted
     mapping(uint256 => uint256) private tokenIdToLevel;
     mapping(uint256 => uint256) private idToDateMinted;
+
+    // ** Pertinent addresses **//
     address public entity;
     address public recoveryOracle;
 
@@ -28,11 +28,19 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         recoveryOracle = _recoveryOracle;
     }
 
+    // ** Modifiers **//
     modifier entityOnly() {
-        require(msg.sender == entity, "Only entity can access this method");
+        if (msg.sender != entity)
+            revert Unauthorized("Only entity can call this");
         _;
     }
 
+    //** Setter functions **//
+    function setNewEntity(address _entity) external entityOnly {
+        entity = _entity;
+    }
+
+    //** Convenience functions **//
     function concat(string memory s1, string memory s2)
         private
         pure
@@ -41,15 +49,25 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         return string(abi.encodePacked(s1, s2));
     }
 
-    function burnWithPrejudice(uint256 tokenId) external payable override {
-        require(msg.sender == ownerOf(tokenId), "Only owner can burn badge");
-        require(
-            (block.timestamp - idToDateMinted[tokenId]) <= 604800,
-            "Not allowed after 7 days"
-        );
+    //** Token functions **//
+    function burn(uint256 tokenId, bool withPrejudice)
+        external
+        payable
+        override
+    {
+        if (msg.sender != ownerOf(tokenId))
+            revert Unauthorized("Only owner can burn badge");
+
+        if (withPrejudice) {
+            if ((block.timestamp - idToDateMinted[tokenId]) <= 604800)
+                revert Unauthorized(
+                    "burnWithPrejudice unauthorized after 7 days"
+                );
+            IEntity(entity).incrementDemeritPoints();
+        }
+
         _burn(tokenId);
-        IEntity(entity).incrementDemeritPoints();
-        emit BadgeBurned(msg.sender, true);
+        emit BadgeBurned(msg.sender, withPrejudice);
     }
 
     function mintBadge(

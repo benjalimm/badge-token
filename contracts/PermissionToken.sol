@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IPermissionToken.sol";
-import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "./NonTransferableERC721.sol";
@@ -11,19 +10,22 @@ import "./NonTransferableERC721.sol";
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;
 
+    //** Token info **//
     Counters.Counter private _ids;
 
-    address public badgeRegistry;
-    address public entityAddress;
+    //** Permission info **//
     mapping(address => PermLevel) public permissionTokenHolders;
 
-    constructor(string memory _entityName, address _entityAddress)
+    //** Pertinent addressess **//
+    address public entity;
+
+    constructor(string memory _entityName, address _entity)
         NonTransferableERC721(
             concat(_entityName, " - Permission token"),
             concat(_entityName, "_PERM_TOKEN")
         )
     {
-        entityAddress = _entityAddress;
+        entity = _entity;
     }
 
     function concat(string memory s1, string memory s2)
@@ -34,12 +36,14 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return string(abi.encodePacked(s1, s2));
     }
 
+    //** Modifiers **//
     modifier entityOnly() {
-        if (msg.sender != entityAddress)
+        if (msg.sender != entity)
             revert Unauthorized("Only entity can call this");
         _;
     }
 
+    //** Token functions **//
     function privateMint(address _owner, string memory tokenURI)
         private
         returns (uint256)
@@ -67,8 +71,9 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return privateMint(_owner, tokenURI);
     }
 
+    //** Getter functions **//
     function getEntityAddress() external view override returns (address) {
-        return entityAddress;
+        return entity;
     }
 
     function getPermStatusForUser(address user)
@@ -78,5 +83,10 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         returns (PermLevel)
     {
         return permissionTokenHolders[user];
+    }
+
+    //** Setter functions **//
+    function setNewEntity(address _entity) external entityOnly {
+        entity = _entity;
     }
 }

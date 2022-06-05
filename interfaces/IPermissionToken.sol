@@ -23,4 +23,6 @@ interface IPermissionToken {
         external
         view
         returns (PermLevel);
+
+    function setNewEntity(address _entity) external;
 }
