@@ -2,6 +2,9 @@ pragma solidity ^0.8.0;
 import "./IPermissionToken.sol";
 
 interface IEntity {
+    error Unauthorized(string message);
+    error Failure(string message);
+
     event PermissionTokenAssigned(
         address entityAddress,
         address assigner,
@@ -9,8 +12,6 @@ interface IEntity {
         address assignee,
         PermLevel assigneeLevel
     );
-
-    function incrementDemeritPoints() external;
 
     function mintBadge(
         address to,

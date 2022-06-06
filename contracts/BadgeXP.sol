@@ -18,6 +18,16 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         recoveryOracle = _recoveryOracle;
     }
 
+    // ** Modifiers ** \\
+    modifier registered(address _registry) {
+        if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
+            revert Unauthorized("Registry is not certified");
+        if (!IBadgeRegistry(_registry).isRegistered(msg.sender))
+            revert Unauthorized("Entity is not registered to registry");
+        _;
+    }
+
+    // ** ERC20 interface functions ** \\
     function totalSupply() external view override returns (uint256) {
         return totalXP;
     }
@@ -76,14 +86,6 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         return 2;
     }
 
-    modifier registeredEntitiesOnly() {
-        require(
-            IBadgeRegistry(badgeRegistry).isRegistered(msg.sender),
-            "Registered entities only"
-        );
-        _;
-    }
-
     function calculateXP(uint256 level) private view returns (uint256) {
         if (level > 0) {
             uint256 xp = 0;
@@ -96,22 +98,22 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         }
     }
 
-    function mint(uint256 level, address recipient)
-        external
-        override
-        registeredEntitiesOnly
-    {
+    function mint(
+        uint256 level,
+        address recipient,
+        address registry
+    ) external override registered(registry) {
         uint256 xp = calculateXP(level);
         balance[recipient] += xp;
         totalXP += xp;
         emit Transfer(msg.sender, recipient, xp);
     }
 
-    function burn(uint256 amount, address recipient)
-        external
-        override
-        registeredEntitiesOnly
-    {
+    function burn(
+        uint256 amount,
+        address recipient,
+        address registry
+    ) external override registered(registry) {
         balance[recipient] -= amount;
         totalXP -= amount;
         emit Transfer(recipient, address(0), amount);

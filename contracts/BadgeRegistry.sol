@@ -11,10 +11,10 @@ import "../interfaces/IBadgePriceCalculator.sol";
 import "../interfaces/IEntity.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
-    address public permissionContract;
     uint256 public levelMultiplierX1000 = 2500;
-    address public owner;
+    address public deployer;
 
+    // ** Pertinent addresses ** \\
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
@@ -23,14 +23,25 @@ contract BadgeRegistry is IBadgeRegistry {
     address public badgePriceCalculator;
     address public recoveryOracle;
 
+    // ** Registry info ** \\
     mapping(address => bool) public entities;
     mapping(address => address) public badgeTokenEntityReverseRecord;
     mapping(address => address) public permTokenEntityReverseRecord;
+    mapping(address => bool) public certifiedRegistries;
 
     constructor() {
-        owner = msg.sender;
+        deployer = msg.sender;
+        certifiedRegistries[address(this)] = true;
     }
 
+    // ** Modifiers ** \\
+    modifier deployerOnly() {
+        if (msg.sender != deployer)
+            revert Unauthorized("Only deployer can call this");
+        _;
+    }
+
+    // ** Registry functions ** \\
     function registerEntity(
         string calldata entityName,
         string calldata genesisTokenURI
@@ -56,27 +67,6 @@ contract BadgeRegistry is IBadgeRegistry {
 
         // 5. Emit entity registered
         emit EntityRegistered(entityAddress, entityName, msg.sender);
-    }
-
-    function isRegistered(address addr) external view override returns (bool) {
-        return entities[addr];
-    }
-
-    modifier ownerOnly() {
-        require(msg.sender == owner, "Only owner can call this");
-        _;
-    }
-
-    function getBadgePrice(uint256 level)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return
-            IBadgePriceCalculator(badgePriceCalculator).calculateBadgePrice(
-                level
-            );
     }
 
     /**
@@ -112,7 +102,24 @@ contract BadgeRegistry is IBadgeRegistry {
         return result;
     }
 
-    /** Getter methods */
+    // ** Getter methods ** \\
+
+    function isRegistered(address addr) external view override returns (bool) {
+        return entities[addr];
+    }
+
+    function getBadgePrice(uint256 level)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return
+            IBadgePriceCalculator(badgePriceCalculator).calculateBadgePrice(
+                level
+            );
+    }
+
     function getBadgeTokenFactory() external view override returns (address) {
         return badgeTokenFactory;
     }
@@ -151,48 +158,53 @@ contract BadgeRegistry is IBadgeRegistry {
         return recoveryOracle;
     }
 
-    /**
-    Setter functions that will be called upon deployment of the Badge registry.
-     */
-    function setEntityFactory(address _entityFactory) external ownerOnly {
+    function isRegistryCertified(address _registry)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return certifiedRegistries[_registry];
+    }
+
+    // ** Deployer set functions ** \\
+    function setEntityFactory(address _entityFactory) external deployerOnly {
         entityFactory = _entityFactory;
-        emit EntityFactorySet(_entityFactory);
     }
 
     function setBadgeTokenFactory(address _badgeTokenFactory)
         external
-        ownerOnly
+        deployerOnly
     {
         badgeTokenFactory = _badgeTokenFactory;
-        emit BadgeTokenFactorySet(_badgeTokenFactory);
     }
 
     function setPermissionTokenFactory(address _permissionTokenFactory)
         external
-        ownerOnly
+        deployerOnly
     {
         permissionTokenFactory = _permissionTokenFactory;
-        emit PermissionTokenFactorySet(_permissionTokenFactory);
     }
 
-    function setBadgeXPToken(address _badgeXPToken) external ownerOnly {
+    function setBadgeXPToken(address _badgeXPToken) external deployerOnly {
         badgeXPToken = _badgeXPToken;
-        emit BadgeXPTokenSet(_badgeXPToken);
     }
 
     function setBadgePriceCalculator(address _badgePriceCalculator)
         external
-        ownerOnly
+        deployerOnly
     {
         badgePriceCalculator = _badgePriceCalculator;
-        emit BadgePriceCalculatorSet(badgePriceCalculator);
     }
 
-    function setRecoveryOracle(address _recoveryOracle) external ownerOnly {
-        // Recovery oracle can only ever be set once
-        if (recoveryOracle != address(0)) {
-            recoveryOracle = _recoveryOracle;
-            emit RecoveryOracleSet(recoveryOracle);
-        }
+    function setRecoveryOracle(address _recoveryOracle) external deployerOnly {
+        recoveryOracle = _recoveryOracle;
+    }
+
+    function setCertifiedRegistry(address _certifiedRegistry, bool _certified)
+        external
+        deployerOnly
+    {
+        certifiedRegistries[_certifiedRegistry] = _certified;
     }
 }

@@ -10,12 +10,6 @@ interface IBadgeToken {
 
     event BadgeBurned(address entityAddress, bool withPrejudice);
 
-    event RecoveryComplete(
-        uint256[] recoveredIds,
-        address initialAddress,
-        address recoveryAddress
-    );
-
     error Unauthorized(string message);
     error Failure(string message);
 
@@ -27,5 +21,7 @@ interface IBadgeToken {
         string calldata _tokenURI
     ) external payable;
 
-    function setNewEntity(address _entity) external
+    function setNewEntity(address _entity) external;
+
+    function getDemeritPoints() external view returns (uint256);
 }

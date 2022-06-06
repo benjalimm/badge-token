@@ -86,7 +86,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
     }
 
     //** Setter functions **//
-    function setNewEntity(address _entity) external entityOnly {
+    function setNewEntity(address _entity) external override entityOnly {
         entity = _entity;
     }
 }

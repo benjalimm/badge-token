@@ -18,8 +18,8 @@ contract Entity is IEntity {
 
     string public entityName;
     address public genesisTokenHolder;
-    // State mgmt
 
+    // ** Pertinent addresses ** \\
     address public badgeRegistry;
     address public badgeToken;
     Counters.Counter public demeritPoints;
@@ -57,42 +57,34 @@ contract Entity is IEntity {
         );
     }
 
-    // ** Modifiers **//
-    modifier genAdminOnly() {
-        require(
-            msg.sender == genesisTokenHolder,
-            "Only genesis token holder can call this"
-        );
+    // ** Modifiers ** \\
+    modifier gen() {
+        if (msg.sender != genesisTokenHolder)
+            revert Unauthorized("Genesis holder only");
         _;
     }
 
-    modifier genOrSuperAdminOnly() {
-        require(
-            IPermissionToken(permissionToken).getPermStatusForUser(
+    modifier genOrSuper() {
+        if (
+            (IPermissionToken(permissionToken).getPermStatusForUser(
                 msg.sender
-            ) ==
-                PermLevel.SUPER_ADMIN ||
-                genesisTokenHolder == msg.sender,
-            "Sender has no super user privilege"
-        );
+            ) != PermLevel.SUPER_ADMIN) || (genesisTokenHolder != msg.sender)
+        ) revert Unauthorized("Super users only");
         _;
     }
 
-    modifier adminsOnly() {
-        require(
-            IPermissionToken(permissionToken).getPermStatusForUser(
-                msg.sender
-            ) ==
-                PermLevel.ADMIN ||
-                IPermissionToken(permissionToken).getPermStatusForUser(
-                    msg.sender
-                ) ==
-                PermLevel.SUPER_ADMIN ||
-                genesisTokenHolder == msg.sender,
-            "Sender has no admin privilege"
-        );
+    modifier admins() {
+        PermLevel level = IPermissionToken(permissionToken)
+            .getPermStatusForUser(msg.sender);
+        if (
+            level != PermLevel.ADMIN ||
+            level != PermLevel.SUPER_ADMIN ||
+            msg.sender != genesisTokenHolder
+        ) revert Unauthorized("Admins only");
         _;
     }
+
+    // ** Entity functions ** \\
 
     function assignPermissionToken(
         address assignee,
@@ -117,19 +109,11 @@ contract Entity is IEntity {
         );
     }
 
-    function incrementDemeritPoints() external override {
-        require(
-            msg.sender == address(badgeToken),
-            "Only badge token can increment demerit points"
-        );
-        demeritPoints.increment();
-    }
-
     function mintBadge(
         address to,
         uint256 level,
         string calldata _tokenURI
-    ) external payable override adminsOnly {
+    ) external payable override admins {
         require(level >= 0, "Level cannot be less than 0");
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
         require(msg.value >= badgePrice, "Not enough ETH");
@@ -138,10 +122,10 @@ contract Entity is IEntity {
         (bool success, ) = safe.call{value: badgePrice}("");
         require(success, "Call to safe failed");
         IBadgeToken(badgeToken).mintBadge(to, level, _tokenURI);
-        IBadgeXP(getBadgeXPToken()).mint(level, to);
+        IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
-    /** Getter functions **/
+    // ** Getter functions ** \\
     function getBadgeRegistry() external view override returns (address) {
         return badgeRegistry;
     }
@@ -162,6 +146,20 @@ contract Entity is IEntity {
         return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
     }
 
-    /** Setter functions **/
-    function setNewEntity(address _entity) external genOrSuperAdminOnly {}
+    // ** Setter functions ** \\
+
+    function setNewEntity(address _entity, address _registry)
+        external
+        genOrSuper
+    {
+        // 1. Make sure entity comes from a certified registry
+        if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
+            revert Unauthorized("Registry is not certified");
+        if (!IBadgeRegistry(_registry).isRegistered(_entity))
+            revert Unauthorized("Entity is not registered to registry");
+
+        // 2. Set new entity
+        IBadgeToken(badgeToken).setNewEntity(_entity);
+        IPermissionToken(permissionToken).setNewEntity(_entity);
+    }
 }

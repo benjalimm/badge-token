@@ -10,12 +10,13 @@ import "./NonTransferableERC721.sol";
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
 
-    // ** Token info **//
+    // ** Token info ** \\
     Counters.Counter private _tokenIds;
     mapping(uint256 => uint256) private tokenIdToLevel;
     mapping(uint256 => uint256) private idToDateMinted;
+    Counters.Counter public demeritPoints;
 
-    // ** Pertinent addresses **//
+    // ** Pertinent addresses ** \\
     address public entity;
     address public recoveryOracle;
 
@@ -28,19 +29,19 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         recoveryOracle = _recoveryOracle;
     }
 
-    // ** Modifiers **//
+    // ** Modifiers ** \\
     modifier entityOnly() {
         if (msg.sender != entity)
             revert Unauthorized("Only entity can call this");
         _;
     }
 
-    //** Setter functions **//
-    function setNewEntity(address _entity) external entityOnly {
+    // ** Setter functions ** \\
+    function setNewEntity(address _entity) external override entityOnly {
         entity = _entity;
     }
 
-    //** Convenience functions **//
+    // ** Convenience functions ** \\
     function concat(string memory s1, string memory s2)
         private
         pure
@@ -49,7 +50,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         return string(abi.encodePacked(s1, s2));
     }
 
-    //** Token functions **//
+    // ** Token functions ** \\
     function burn(uint256 tokenId, bool withPrejudice)
         external
         payable
@@ -63,7 +64,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
                 revert Unauthorized(
                     "burnWithPrejudice unauthorized after 7 days"
                 );
-            IEntity(entity).incrementDemeritPoints();
+            demeritPoints.increment();
         }
 
         _burn(tokenId);
@@ -115,5 +116,9 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         } else {
             revert Unauthorized("Only recovery address can recover badges");
         }
+    }
+
+    function getDemeritPoints() public view override returns (uint256) {
+        return demeritPoints.current();
     }
 }
