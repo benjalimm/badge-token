@@ -58,29 +58,36 @@ contract Entity is IEntity {
     }
 
     // ** Modifiers ** \\
+
     modifier gen() {
-        if (msg.sender != genesisTokenHolder)
-            revert Unauthorized("Genesis holder only");
+        require(
+            msg.sender == genesisTokenHolder,
+            "Only genesis token holder can call this"
+        );
         _;
     }
 
     modifier genOrSuper() {
-        if (
-            (IPermissionToken(permissionToken).getPermStatusForUser(
+        require(
+            IPermissionToken(permissionToken).getPermStatusForUser(
                 msg.sender
-            ) != PermLevel.SUPER_ADMIN) || (genesisTokenHolder != msg.sender)
-        ) revert Unauthorized("Super users only");
+            ) ==
+                PermLevel.SUPER_ADMIN ||
+                genesisTokenHolder == msg.sender,
+            "Sender has no super user privilege"
+        );
         _;
     }
 
     modifier admins() {
         PermLevel level = IPermissionToken(permissionToken)
             .getPermStatusForUser(msg.sender);
-        if (
-            level != PermLevel.ADMIN ||
-            level != PermLevel.SUPER_ADMIN ||
-            msg.sender != genesisTokenHolder
-        ) revert Unauthorized("Admins only");
+        require(
+            level == PermLevel.ADMIN ||
+                level == PermLevel.SUPER_ADMIN ||
+                genesisTokenHolder == msg.sender,
+            "Sender has no admin privilege"
+        );
         _;
     }
 
