@@ -16,6 +16,7 @@ import "../interfaces/IEntity.sol";
 contract Entity is IEntity {
     using Counters for Counters.Counter;
 
+    // ** Entity info ** \\
     string public entityName;
     address public genesisTokenHolder;
 
@@ -160,7 +161,7 @@ contract Entity is IEntity {
 
     // ** Setter functions ** \\
 
-    function setNewEntity(address _entity, address _registry) external gen {
+    function migrateToEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
             revert Unauthorized("Registry is not certified");
@@ -170,17 +171,22 @@ contract Entity is IEntity {
         // 2. Set new entity
         IBadgeToken(badgeToken).setNewEntity(_entity);
         IPermissionToken(permissionToken).setNewEntity(_entity);
+        emit EntityMigrated(_entity);
     }
 
-    function setTokens(address badge, address permission) external gen {
+    function migrateToTokens(address badge, address permission) external gen {
+        // 1. Make sure entity has been set in badge and perm tokens
         if (IBadgeToken(badge).getEntity() != address(this))
             revert Unauthorized("Badge token is not owned by entity");
 
         if (IPermissionToken(permission).getEntity() != address(this))
             revert Unauthorized("Permission token is not owned by entity");
 
+        // 2. Set tokens;
         badgeToken = badge;
         permissionToken = permission;
+
+        // 3. Set reverse registry in BadgeRegistry
         IBadgeRegistry(badgeRegistry).setTokenReverseRecords(badge, permission);
     }
 }
