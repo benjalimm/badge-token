@@ -171,6 +171,7 @@ contract Entity is IEntity {
         // 2. Set new entity
         IBadgeToken(badgeToken).setNewEntity(_entity);
         IPermissionToken(permissionToken).setNewEntity(_entity);
+
         emit EntityMigrated(_entity);
     }
 
@@ -188,5 +189,7 @@ contract Entity is IEntity {
 
         // 3. Set reverse registry in BadgeRegistry
         IBadgeRegistry(badgeRegistry).setTokenReverseRecords(badge, permission);
+
+        emit TokensMigrated(badge, permission);
     }
 }
