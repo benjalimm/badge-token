@@ -22,7 +22,8 @@ interface IBadgeRegistry {
 
     function registerEntity(
         string calldata entityName,
-        string calldata genesisTokenURI
+        string calldata genesisTokenURI,
+        bool deployTokens
     ) external;
 
     function getBadgeTokenFactory() external view returns (address);
@@ -45,4 +46,6 @@ interface IBadgeRegistry {
         external
         view
         returns (bool);
+
+    function setTokenReverseRecords(address perm, address badge) external;
 }

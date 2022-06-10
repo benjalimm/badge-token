@@ -118,7 +118,12 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         }
     }
 
+    // ** Getter functions ** \\
     function getDemeritPoints() public view override returns (uint256) {
         return demeritPoints.current();
+    }
+
+    function getEntity() public view override returns (address) {
+        return entity;
     }
 }

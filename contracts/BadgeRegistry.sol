@@ -41,29 +41,42 @@ contract BadgeRegistry is IBadgeRegistry {
         _;
     }
 
+    modifier registeredEntity() {
+        if (entities[msg.sender] != true)
+            revert Unauthorized("Entity not registered");
+        _;
+    }
+
     // ** Registry functions ** \\
     function registerEntity(
         string calldata entityName,
-        string calldata genesisTokenURI
+        string calldata genesisTokenURI,
+        bool deployTokens
     ) external override {
         // 1. Deploy entity
         IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
             recoveryOracle,
             msg.sender,
-            genesisTokenURI
+            genesisTokenURI,
+            deployTokens
         );
         address entityAddress = address(entity);
 
         // 2. Set entity address in registry
         entities[entityAddress] = true;
 
-        // 3. Store badge token reverse record
-        badgeTokenEntityReverseRecord[entityAddress] = entity.getBadgeToken();
+        if (deployTokens) {
+            // 3. Store badge token reverse record
+            badgeTokenEntityReverseRecord[
+                entity.getBadgeToken()
+            ] = entityAddress;
 
-        // 4. Store permission token reverse record
-        permTokenEntityReverseRecord[entityAddress] = entity
-            .getPermissionToken();
+            // 4. Store permission token reverse record
+            permTokenEntityReverseRecord[
+                entity.getPermissionToken()
+            ] = entityAddress;
+        }
 
         // 5. Emit entity registered
         emit EntityRegistered(entityAddress, entityName, msg.sender);
@@ -165,6 +178,16 @@ contract BadgeRegistry is IBadgeRegistry {
         returns (bool)
     {
         return certifiedRegistries[_registry];
+    }
+
+    // ** Setter functions ** \\
+    function setTokenReverseRecords(address perm, address badge)
+        external
+        override
+        registeredEntity
+    {
+        badgeTokenEntityReverseRecord[badge] = msg.sender;
+        permTokenEntityReverseRecord[perm] = msg.sender;
     }
 
     // ** Deployer set functions ** \\

@@ -8,7 +8,8 @@ interface IEntityFactory {
         string calldata _entityName,
         address recoveryOracle,
         address genesisUser,
-        string calldata genesisTokenURI
+        string calldata genesisTokenURI,
+        bool deployTokens
     ) external returns (IEntity);
 
     event EntityDeployed(string entityName, address entityAddress);

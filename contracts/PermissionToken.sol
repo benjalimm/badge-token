@@ -36,14 +36,14 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return string(abi.encodePacked(s1, s2));
     }
 
-    //** Modifiers **//
+    // ** Modifiers ** \\
     modifier entityOnly() {
         if (msg.sender != entity)
             revert Unauthorized("Only entity can call this");
         _;
     }
 
-    //** Token functions **//
+    // ** Token functions ** \\
     function privateMint(address _owner, string memory tokenURI)
         private
         returns (uint256)
@@ -71,8 +71,8 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return privateMint(_owner, tokenURI);
     }
 
-    //** Getter functions **//
-    function getEntityAddress() external view override returns (address) {
+    // ** Getter functions ** \\
+    function getEntity() external view override returns (address) {
         return entity;
     }
 
@@ -85,7 +85,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return permissionTokenHolders[user];
     }
 
-    //** Setter functions **//
+    // ** Setter functions ** \\
     function setNewEntity(address _entity) external override entityOnly {
         entity = _entity;
     }

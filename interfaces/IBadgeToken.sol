@@ -24,4 +24,6 @@ interface IBadgeToken {
     function setNewEntity(address _entity) external;
 
     function getDemeritPoints() external view returns (uint256);
+
+    function getEntity() external view returns (address);
 }

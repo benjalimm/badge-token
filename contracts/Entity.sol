@@ -30,31 +30,36 @@ contract Entity is IEntity {
         address _badgeRegistry,
         address _recoveryOracle,
         address _genesisTokenHolder,
-        string memory _genesisTokenURI
+        string memory _genesisTokenURI,
+        bool deployTokens
     ) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
         entityName = _entityName;
         genesisTokenHolder = _genesisTokenHolder;
 
-        // 1. Create Badge token contract
-        address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
-            .getBadgeTokenFactory();
-        badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
-            .createBadgeToken(_entityName, _recoveryOracle);
+        if (deployTokens) {
+            // 1. Create Badge token contract
+            address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
+                .getBadgeTokenFactory();
+            badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
+                .createBadgeToken(_entityName, _recoveryOracle);
 
-        // 2. Create Permission token contract
-        address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
-            .getPermissionTokenFactory();
-        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(_entityName);
+            // 2. Create Permission token contract
+            address permissionTokenFactoryAddress = IBadgeRegistry(
+                _badgeRegistry
+            ).getPermissionTokenFactory();
+            permissionToken = IPermissionTokenFactory(
+                permissionTokenFactoryAddress
+            ).createPermissionToken(_entityName);
 
-        // 3. Mint genesis token
-        IPermissionToken(permissionToken).mintAsEntity(
-            msg.sender,
-            PermLevel.GENESIS,
-            _genesisTokenURI
-        );
+            // 3. Mint genesis token
+            IPermissionToken(permissionToken).mintAsEntity(
+                msg.sender,
+                PermLevel.GENESIS,
+                _genesisTokenURI
+            );
+        }
     }
 
     // ** Modifiers ** \\
@@ -155,10 +160,7 @@ contract Entity is IEntity {
 
     // ** Setter functions ** \\
 
-    function setNewEntity(address _entity, address _registry)
-        external
-        genOrSuper
-    {
+    function setNewEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
             revert Unauthorized("Registry is not certified");
@@ -168,5 +170,17 @@ contract Entity is IEntity {
         // 2. Set new entity
         IBadgeToken(badgeToken).setNewEntity(_entity);
         IPermissionToken(permissionToken).setNewEntity(_entity);
+    }
+
+    function setTokens(address badge, address permission) external gen {
+        if (IBadgeToken(badge).getEntity() != address(this))
+            revert Unauthorized("Badge token is not owned by entity");
+
+        if (IPermissionToken(permission).getEntity() != address(this))
+            revert Unauthorized("Permission token is not owned by entity");
+
+        badgeToken = badge;
+        permissionToken = permission;
+        IBadgeRegistry(badgeRegistry).setTokenReverseRecords(badge, permission);
     }
 }
