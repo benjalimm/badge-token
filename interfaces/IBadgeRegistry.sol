@@ -5,6 +5,8 @@ import "hardhat/console.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 
 interface IBadgeRegistry {
+    error Unauthorized(string message);
+
     enum EntityReverseRecordType {
         BadgeToken,
         PermissionToken
@@ -16,23 +18,12 @@ interface IBadgeRegistry {
         address genesisTokenHolder
     );
 
-    event EntityFactorySet(address entityFactory);
-
-    event BadgeTokenFactorySet(address badgeTokenFactory);
-
-    event PermissionTokenFactorySet(address permissionTokenFactory);
-
-    event BadgeXPTokenSet(address badgeXPToken);
-
-    event BadgePriceCalculatorSet(address badgePriceCalculator);
-
-    event RecoveryOracleSet(address recoveryOracle);
-
     function isRegistered(address addr) external view returns (bool);
 
     function registerEntity(
         string calldata entityName,
-        string calldata genesisTokenURI
+        string calldata genesisTokenURI,
+        bool deployTokens
     ) external;
 
     function getBadgeTokenFactory() external view returns (address);
@@ -50,4 +41,11 @@ interface IBadgeRegistry {
     function getSafe() external view returns (address);
 
     function getRecoveryOracle() external view returns (address);
+
+    function isRegistryCertified(address _registry)
+        external
+        view
+        returns (bool);
+
+    function setTokenReverseRecords(address perm, address badge) external;
 }

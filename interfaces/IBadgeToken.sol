@@ -10,20 +10,20 @@ interface IBadgeToken {
 
     event BadgeBurned(address entityAddress, bool withPrejudice);
 
-    event RecoveryComplete(
-        uint256[] recoveredIds,
-        address initialAddress,
-        address recoveryAddress
-    );
-
     error Unauthorized(string message);
     error Failure(string message);
 
-    function burnWithPrejudice(uint256 tokenId) external payable;
+    function burn(uint256 tokenId, bool withPrejudice) external payable;
 
     function mintBadge(
         address _to,
         uint256 level,
         string calldata _tokenURI
     ) external payable;
+
+    function setNewEntity(address _entity) external;
+
+    function getDemeritPoints() external view returns (uint256);
+
+    function getEntity() external view returns (address);
 }

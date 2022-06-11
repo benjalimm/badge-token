@@ -14,15 +14,13 @@ import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IEntity.sol";
 
 contract Entity is IEntity {
-    using Counters for Counters.Counter;
-
+    // ** Entity info ** \\
     string public entityName;
     address public genesisTokenHolder;
-    // State mgmt
 
+    // ** Pertinent addresses ** \\
     address public badgeRegistry;
     address public badgeToken;
-    Counters.Counter public demeritPoints;
     address public permissionToken;
 
     constructor(
@@ -30,34 +28,41 @@ contract Entity is IEntity {
         address _badgeRegistry,
         address _recoveryOracle,
         address _genesisTokenHolder,
-        string memory _genesisTokenURI
+        string memory _genesisTokenURI,
+        bool deployTokens
     ) {
         console.log("Deployed new entity:", _entityName);
         badgeRegistry = _badgeRegistry;
         entityName = _entityName;
         genesisTokenHolder = _genesisTokenHolder;
 
-        // Create Badge token contract
-        address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
-            .getBadgeTokenFactory();
-        badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
-            .createBadgeToken(_entityName, _recoveryOracle);
+        if (deployTokens) {
+            // 1. Create Badge token contract
+            address badgeTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
+                .getBadgeTokenFactory();
+            badgeToken = IBadgeTokenFactory(badgeTokenFactoryAddress)
+                .createBadgeToken(_entityName, _recoveryOracle);
 
-        // Create Permission token contract
-        address permissionTokenFactoryAddress = IBadgeRegistry(_badgeRegistry)
-            .getPermissionTokenFactory();
-        permissionToken = IPermissionTokenFactory(permissionTokenFactoryAddress)
-            .createPermissionToken(_entityName);
+            // 2. Create Permission token contract
+            address permissionTokenFactoryAddress = IBadgeRegistry(
+                _badgeRegistry
+            ).getPermissionTokenFactory();
+            permissionToken = IPermissionTokenFactory(
+                permissionTokenFactoryAddress
+            ).createPermissionToken(_entityName);
 
-        // Mint genesis token
-        IPermissionToken(permissionToken).mintAsEntity(
-            msg.sender,
-            PermLevel.GENESIS,
-            _genesisTokenURI
-        );
+            // 3. Mint genesis token
+            IPermissionToken(permissionToken).mintAsEntity(
+                msg.sender,
+                PermLevel.GENESIS,
+                _genesisTokenURI
+            );
+        }
     }
 
-    modifier genAdminOnly() {
+    // ** Modifiers ** \\
+
+    modifier gen() {
         require(
             msg.sender == genesisTokenHolder,
             "Only genesis token holder can call this"
@@ -65,7 +70,7 @@ contract Entity is IEntity {
         _;
     }
 
-    modifier genOrSuperAdminOnly() {
+    modifier genOrSuper() {
         require(
             IPermissionToken(permissionToken).getPermStatusForUser(
                 msg.sender
@@ -77,21 +82,19 @@ contract Entity is IEntity {
         _;
     }
 
-    modifier adminsOnly() {
+    modifier admins() {
+        PermLevel level = IPermissionToken(permissionToken)
+            .getPermStatusForUser(msg.sender);
         require(
-            IPermissionToken(permissionToken).getPermStatusForUser(
-                msg.sender
-            ) ==
-                PermLevel.ADMIN ||
-                IPermissionToken(permissionToken).getPermStatusForUser(
-                    msg.sender
-                ) ==
-                PermLevel.SUPER_ADMIN ||
+            level == PermLevel.ADMIN ||
+                level == PermLevel.SUPER_ADMIN ||
                 genesisTokenHolder == msg.sender,
             "Sender has no admin privilege"
         );
         _;
     }
+
+    // ** Entity functions ** \\
 
     function assignPermissionToken(
         address assignee,
@@ -116,27 +119,11 @@ contract Entity is IEntity {
         );
     }
 
-    function incrementDemeritPoints() external override {
-        require(
-            msg.sender == address(badgeToken),
-            "Only badge token can increment demerit points"
-        );
-        demeritPoints.increment();
-    }
-
-    function getDemeritPoints() public view returns (uint256) {
-        return demeritPoints.current();
-    }
-
-    function getBadgeXPToken() private view returns (address) {
-        return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
-    }
-
     function mintBadge(
         address to,
         uint256 level,
         string calldata _tokenURI
-    ) external payable override adminsOnly {
+    ) external payable override admins {
         require(level >= 0, "Level cannot be less than 0");
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
         require(msg.value >= badgePrice, "Not enough ETH");
@@ -145,9 +132,10 @@ contract Entity is IEntity {
         (bool success, ) = safe.call{value: badgePrice}("");
         require(success, "Call to safe failed");
         IBadgeToken(badgeToken).mintBadge(to, level, _tokenURI);
-        IBadgeXP(getBadgeXPToken()).mint(level, to);
+        IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
+    // ** Getter functions ** \\
     function getBadgeRegistry() external view override returns (address) {
         return badgeRegistry;
     }
@@ -158,5 +146,43 @@ contract Entity is IEntity {
 
     function getBadgeToken() external view override returns (address) {
         return badgeToken;
+    }
+
+    function getBadgeXPToken() private view returns (address) {
+        return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
+    }
+
+    // ** Setter functions ** \\
+
+    function migrateToEntity(address _entity, address _registry) external gen {
+        // 1. Make sure entity comes from a certified registry
+        if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
+            revert Unauthorized("Registry is not certified");
+        if (!IBadgeRegistry(_registry).isRegistered(_entity))
+            revert Unauthorized("Entity is not registered to registry");
+
+        // 2. Set new entity
+        IBadgeToken(badgeToken).setNewEntity(_entity);
+        IPermissionToken(permissionToken).setNewEntity(_entity);
+
+        emit EntityMigrated(_entity);
+    }
+
+    function migrateToTokens(address badge, address permission) external gen {
+        // 1. Make sure entity has been set in badge and perm tokens
+        if (IBadgeToken(badge).getEntity() != address(this))
+            revert Unauthorized("Badge token is not owned by entity");
+
+        if (IPermissionToken(permission).getEntity() != address(this))
+            revert Unauthorized("Permission token is not owned by entity");
+
+        // 2. Set tokens;
+        badgeToken = badge;
+        permissionToken = permission;
+
+        // 3. Set reverse registry in BadgeRegistry
+        IBadgeRegistry(badgeRegistry).setTokenReverseRecords(badge, permission);
+
+        emit TokensMigrated(badge, permission);
     }
 }
