@@ -7,11 +7,11 @@ async function execute() {
     "BadgeRegistry"
   );
   const badgeRegistry1 = await badgeRegistryContract.attach(
-    "0x812CD0fdBddA06748DAd23Fa0614b1A13920dC96"
+    "0xCBa09006B687089E0f913530bc88aF163231F3B1"
   );
 
   await badgeRegistry1.setCertifiedRegistry(
-    "0x59C98aA670497D5795Eccc154015d2a7Ce76b8dd",
+    "0x673F5aA8D0296eFbd65526724d360c2BE79Acf8E",
     true
   );
 

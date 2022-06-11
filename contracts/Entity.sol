@@ -14,8 +14,6 @@ import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IEntity.sol";
 
 contract Entity is IEntity {
-    using Counters for Counters.Counter;
-
     // ** Entity info ** \\
     string public entityName;
     address public genesisTokenHolder;
@@ -23,7 +21,6 @@ contract Entity is IEntity {
     // ** Pertinent addresses ** \\
     address public badgeRegistry;
     address public badgeToken;
-    Counters.Counter public demeritPoints;
     address public permissionToken;
 
     constructor(
@@ -149,10 +146,6 @@ contract Entity is IEntity {
 
     function getBadgeToken() external view override returns (address) {
         return badgeToken;
-    }
-
-    function getDemeritPoints() public view returns (uint256) {
-        return demeritPoints.current();
     }
 
     function getBadgeXPToken() private view returns (address) {

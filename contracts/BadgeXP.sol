@@ -20,10 +20,10 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
 
     // ** Modifiers ** \\
     modifier registered(address _registry) {
-        // if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
-        //     revert Unauthorized("Registry is not certified");
-        // if (!IBadgeRegistry(_registry).isRegistered(msg.sender))
-        //     revert Unauthorized("Entity is not registered to registry");
+        if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
+            revert Unauthorized("Registry is not certified");
+        if (!IBadgeRegistry(_registry).isRegistered(msg.sender))
+            revert Unauthorized("Entity is not registered to registry");
         _;
     }
 
