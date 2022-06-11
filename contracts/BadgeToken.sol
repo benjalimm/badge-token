@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IBadgeToken.sol";
@@ -88,6 +88,16 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         emit BadgeMinted(address(this), newItemId, level, _tokenURI);
     }
 
+    function bytesToAddress(bytes memory bys)
+        private
+        pure
+        returns (address addr)
+    {
+        assembly {
+            addr := mload(add(bys, 32))
+        }
+    }
+
     function recover(uint256 id) external {
         // 1. Get owner of id
         address owner = ownerOf(id);
@@ -102,13 +112,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
         if (!success) revert Failure("Call to recovery oracle failed");
 
-        // 3. Convert bytes to address
-        address recoveryAddress;
-        assembly {
-            recoveryAddress := mload(add(result, 32))
-        }
-        // 4. Ensure recovery address has been set
-        if (recoveryAddress == msg.sender) {
+        // 3. Check if recovery address matches sender
+        if (bytesToAddress(result) == msg.sender) {
             _balances[owner] -= 1;
             _balances[msg.sender] += 1;
             _owners[id] = msg.sender;

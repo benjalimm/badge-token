@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 interface IPermissionTokenFactory {
     function createPermissionToken(string calldata _entityName)

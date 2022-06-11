@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeRecoveryOracle is IBadgeRecoveryOracle {
@@ -6,7 +6,7 @@ contract BadgeRecoveryOracle is IBadgeRecoveryOracle {
 
     function setRecoveryAddress(address _recoveryAddress) external override {
         // 1. Make sure recovery address is not already set
-        address existingRecoveryAddress = recoveryAddressMap[_recoveryAddress];
+        address existingRecoveryAddress = recoveryAddressMap[msg.sender];
         if (existingRecoveryAddress != address(0)) {
             revert RecoveryAddressAlreadySet(existingRecoveryAddress);
         }

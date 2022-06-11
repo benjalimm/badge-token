@@ -48,28 +48,30 @@ async function main() {
   await waitForSetAmountOfTime();
 
   // 7. Deploy Badge recovery oracle
-  let recoveryOracle: BadgeRecoveryOracle;
-  try {
-    const badgeRecoveryOracleContract = await ethers.getContractFactory(
-      "BadgeRecoveryOracle"
-    );
-    console.log("Attempting to deploy Badge recovery oracle...");
-    recoveryOracle = await badgeRecoveryOracleContract.deploy();
-    await recoveryOracle.deployed();
-    console.log(
-      "Successfully deployed BadgeRecoveryOracle to address: ",
-      recoveryOracle.address
-    );
-  } catch (e) {
-    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
-  }
+  // let recoveryOracle: BadgeRecoveryOracle;
+  // try {
+  //   const badgeRecoveryOracleContract = await ethers.getContractFactory(
+  //     "BadgeRecoveryOracle"
+  //   );
+  //   console.log("Attempting to deploy Badge recovery oracle...");
+  //   recoveryOracle = await badgeRecoveryOracleContract.deploy();
+  //   await recoveryOracle.deployed();
+  //   console.log(
+  //     "Successfully deployed BadgeRecoveryOracle to address: ",
+  //     recoveryOracle.address
+  //   );
+  // } catch (e) {
+  //   throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  // }
 
-  await waitForSetAmountOfTime();
+  // await waitForSetAmountOfTime();
+
+  const recoveryOracleAddress = "0xFA99FDf153e5647422484578c761889C8bF971D6";
 
   // 7.1 Set Badge recovery oracle
   try {
     console.log("Attempting to set BadgeRecoveryOracle in badge registry...");
-    await badgeRegistry.setRecoveryOracle(recoveryOracle.address);
+    await badgeRegistry.setRecoveryOracle(recoveryOracleAddress);
     console.log("Successfully set BadgePriceCalculator in badge registry.");
   } catch (e) {
     throw new Error(
@@ -188,7 +190,7 @@ async function main() {
     console.log("Attempting to deploy BadgeXP token...");
     badgeXPToken = await badgeXPTokenContract.deploy(
       badgeRegistryAddress,
-      recoveryOracle.address
+      recoveryOracleAddress
     );
     await badgeXPToken.deployed();
     console.log(
