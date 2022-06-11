@@ -12,6 +12,7 @@ import {
   EntityFactory,
   PermissionTokenFactory,
   BadgeRecoveryOracle,
+  BadgeXPOracle,
 } from "../typechain";
 
 async function wait(seconds: number): Promise<void> {
@@ -211,6 +212,38 @@ async function main() {
   } catch (e) {
     throw new Error(
       `Failed to set BadgeXP token in badge registry due to error: ${e}`
+    );
+  }
+
+  await waitForSetAmountOfTime();
+
+  // Deploy BadgeXPOracle
+  let badgeXPOracle: BadgeXPOracle;
+  try {
+    const badgeXPOracleTokenContract = await ethers.getContractFactory(
+      "BadgeXPOracle"
+    );
+    console.log("Attempting to deploy BadgeXPOracle...");
+    badgeXPOracle = await badgeXPOracleTokenContract.deploy();
+    await badgeXPOracle.deployed();
+    console.log(
+      "Successfully deployed BadgeXPOracle to address: ",
+      badgeXPOracle.address
+    );
+  } catch (e) {
+    throw new Error(`Failed to deploy BadgeXPOracle  due to error: ${e}`);
+  }
+
+  await waitForSetAmountOfTime();
+
+  // Set badgeXPOracle
+  try {
+    console.log("Attempting to set BadgeXPOracle in badgeXP...");
+    await badgeXPToken.setXPOracle(badgeXPOracle.address);
+    console.log("Successfully set BadgeXPOracle in badgeXP.");
+  } catch (e) {
+    throw new Error(
+      `Failed to set BadgeXPOracle in badgeXP due to error: ${e}`
     );
   }
 

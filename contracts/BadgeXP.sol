@@ -5,15 +5,22 @@ import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
+import "../interfaces/IBadgeXPOracle.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
+    address public deployer;
+
+    // ** ERC20 properties ** \\
     uint256 public totalXP;
     mapping(address => uint256) public balance;
+
+    // ** Pertinent addressess ** \\
     address public badgeRegistry;
     address public recoveryOracle;
-    uint256 public baseXP = 1000;
+    address public xpOracle;
 
     constructor(address _badgeRegistry, address _recoveryOracle) {
+        deployer = msg.sender;
         badgeRegistry = _badgeRegistry;
         recoveryOracle = _recoveryOracle;
     }
@@ -86,24 +93,13 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         return 2;
     }
 
-    function calculateXP(uint256 level) private view returns (uint256) {
-        if (level > 0) {
-            uint256 xp = 0;
-            for (uint256 i = level; i > 0; i--) {
-                xp += baseXP + ((25 * xp) / 100);
-            }
-            return xp;
-        } else {
-            return 0;
-        }
-    }
-
+    // ** BadgeXP functions ** \\
     function mint(
         uint256 level,
         address recipient,
         address registry
     ) external override registered(registry) {
-        uint256 xp = calculateXP(level);
+        uint256 xp = IBadgeXPOracle(xpOracle).calculateXP(level);
         balance[recipient] += xp;
         totalXP += xp;
         emit Transfer(msg.sender, recipient, xp);
@@ -149,5 +145,12 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         } else {
             revert Unauthorized("Only recovery address can recover Badge XP");
         }
+    }
+
+    // ** Setter functions ** \\
+    function setXPOracle(address _xpOracle) external {
+        if (msg.sender != deployer)
+            revert Unauthorized("Only deployer can set");
+        xpOracle = _xpOracle;
     }
 }
