@@ -6,18 +6,6 @@ interface IEntity {
     error Unauthorized(string message);
     error Failure(string message);
 
-    // ** Events ** \\
-    event PermissionTokenAssigned(
-        address entityAddress,
-        address assigner,
-        PermLevel assignerLevel,
-        address assignee,
-        PermLevel assigneeLevel
-    );
-
-    event EntityMigrated(address newEntity);
-    event TokensMigrated(address newBadgeToken, address newPermToken);
-
     // ** Functions ** \\
     function mintBadge(
         address to,

@@ -12,8 +12,6 @@ interface IPermissionToken {
     error Unauthorized(string message);
     error Failure(string message);
 
-    // ** Events ** \\
-
     function mintAsEntity(
         address _owner,
         PermLevel level,
@@ -29,5 +27,5 @@ interface IPermissionToken {
 
     function getEntity() external view returns (address);
 
-    function revokePermission(address _owner) external
+    function revokePermission(address _owner) external;
 }
