@@ -15,6 +15,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
 
     //** Permission info **//
     mapping(address => PermLevel) public permissionTokenHolders;
+    mapping(address => uint256) public ownerReverseRecord;
 
     //** Pertinent addressess **//
     address public entity;
@@ -57,7 +58,10 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         // 3. Mint the token
         _mint(_owner, newItemId);
 
-        // 4. Set the tokenURI
+        // 4. Set reverse record
+        ownerReverseRecord[_owner] = newItemId;
+
+        // 5. Set the tokenURI
         _setTokenURI(newItemId, tokenURI);
         return newItemId;
     }
@@ -67,8 +71,26 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         PermLevel level,
         string memory tokenURI
     ) external payable override entityOnly returns (uint256) {
+        if (ownerReverseRecord[_owner] != 0) {
+            revert Failure("Owner already has a token");
+        }
         permissionTokenHolders[_owner] = level;
         return privateMint(_owner, tokenURI);
+    }
+
+    function revokePermission(address _owner) external override entityOnly {
+        uint256 id = ownerReverseRecord[_owner];
+
+        if (id == 0) {
+            revert Failure("Owner does not have a token");
+        }
+
+        // Delete records
+        delete permissionTokenHolders[_owner];
+        delete ownerReverseRecord[_owner];
+
+        // Burn id
+        _burn(id);
     }
 
     // ** Getter functions ** \\
@@ -76,13 +98,13 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return entity;
     }
 
-    function getPermStatusForUser(address user)
+    function getPermStatusForAdmin(address admin)
         external
         view
         override
         returns (PermLevel)
     {
-        return permissionTokenHolders[user];
+        return permissionTokenHolders[admin];
     }
 
     // ** Setter functions ** \\

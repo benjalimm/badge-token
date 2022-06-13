@@ -8,8 +8,11 @@ enum PermLevel {
 }
 
 interface IPermissionToken {
+    // ** Errors ** \\
     error Unauthorized(string message);
     error Failure(string message);
+
+    // ** Events ** \\
 
     function mintAsEntity(
         address _owner,
@@ -17,7 +20,7 @@ interface IPermissionToken {
         string memory tokenURI
     ) external payable returns (uint256);
 
-    function getPermStatusForUser(address user)
+    function getPermStatusForAdmin(address admins)
         external
         view
         returns (PermLevel);
@@ -25,4 +28,6 @@ interface IPermissionToken {
     function setNewEntity(address _entity) external;
 
     function getEntity() external view returns (address);
+
+    function revokePermission(address _owner) external
 }

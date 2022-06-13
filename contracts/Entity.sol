@@ -95,7 +95,6 @@ contract Entity is IEntity {
     }
 
     // ** Entity functions ** \\
-
     function assignPermissionToken(
         address assignee,
         PermLevel level,
@@ -117,6 +116,16 @@ contract Entity is IEntity {
             assignee,
             level
         );
+    }
+
+    function revokePermissionToken(address assignee) external genOrSuper {
+        // 1. Get level of assigner
+
+        PermLevel revokerLevel = IPermissionToken(permissionToken)
+            .getPermStatusForUser(msg.sender);
+        PermLevel assigneeLevel = IPermissionToken(permissionToken)
+            .getPermStatusForUser(assignee);
+        require(revokerLevel > assigneeLevel, "Assigner has no permission");
     }
 
     function mintBadge(
