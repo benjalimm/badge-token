@@ -10,13 +10,24 @@ import "./NonTransferableERC721.sol";
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;
 
-    //** Token info **//
+    //** Token info ** \\
     Counters.Counter private _ids;
 
-    //** Permission info **//
-    mapping(address => PermLevel) public permissionTokenHolders;
+    // ** Permission info ** \\
 
-    //** Pertinent addressess **//
+    // *** User to permission level mapping *** //
+
+    /// 0 - NO PERMISSION
+    /// 1 - ADMIN: Can reward Badges
+    /// 2 - SUPER ADMIN: Can reward Badges and issue admin permission
+    /// 3 - GENESIS: ONLY ONE EXISTS. User has all privilege + can issue super admin permission
+
+    // ***  *** //
+
+    mapping(address => uint256) public adminToPermLevel;
+    mapping(address => uint256) public ownerReverseRecord;
+
+    //** Pertinent addressess ** \\
     address public entity;
 
     constructor(string memory _entityName, address _entity)
@@ -57,18 +68,39 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         // 3. Mint the token
         _mint(_owner, newItemId);
 
-        // 4. Set the tokenURI
+        // 4. Set reverse record
+        ownerReverseRecord[_owner] = newItemId;
+
+        // 5. Set the tokenURI
         _setTokenURI(newItemId, tokenURI);
         return newItemId;
     }
 
     function mintAsEntity(
-        address _owner,
-        PermLevel level,
+        address assignee,
+        uint256 level,
         string memory tokenURI
     ) external payable override entityOnly returns (uint256) {
-        permissionTokenHolders[_owner] = level;
-        return privateMint(_owner, tokenURI);
+        if (ownerReverseRecord[assignee] != 0) {
+            revert Failure("Owner already has a token");
+        }
+        adminToPermLevel[assignee] = level;
+        return privateMint(assignee, tokenURI);
+    }
+
+    function revokePermission(address revokee) external override entityOnly {
+        uint256 id = ownerReverseRecord[revokee];
+
+        if (id == 0) {
+            revert Failure("Owner does not have a token");
+        }
+
+        // Delete records
+        delete adminToPermLevel[revokee];
+        delete ownerReverseRecord[revokee];
+
+        // Burn id
+        _burn(id);
     }
 
     // ** Getter functions ** \\
@@ -76,13 +108,13 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         return entity;
     }
 
-    function getPermStatusForUser(address user)
+    function getPermStatusForAdmin(address admin)
         external
         view
         override
-        returns (PermLevel)
+        returns (uint256 lvl)
     {
-        return permissionTokenHolders[user];
+        lvl = adminToPermLevel[admin];
     }
 
     // ** Setter functions ** \\
