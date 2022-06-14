@@ -20,6 +20,9 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     address public entity;
     address public recoveryOracle;
 
+    // ** Constants ** \\
+    uint256 public constant TIME_ALLOWED_TO_BURN = 2592000; // 30 days
+
     constructor(
         address _entity,
         address _recoveryOracle,
@@ -51,11 +54,24 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     // ** Token functions ** \\
-    function burn(uint256 tokenId, bool withPrejudice)
-        external
-        payable
-        override
-    {
+    function mintBadge(
+        address _to,
+        uint256 level,
+        string calldata _tokenURI
+    ) external override entityOnly {
+        _tokenIds.increment();
+        uint256 newItemId = _tokenIds.current();
+
+        _mint(_to, newItemId);
+        _setTokenURI(newItemId, _tokenURI);
+
+        tokenIdToLevel[newItemId] = level;
+        idToDateMinted[newItemId] = block.timestamp;
+
+        emit BadgeMinted(address(this), newItemId, level, _tokenURI);
+    }
+
+    function burn(uint256 tokenId, bool withPrejudice) external {
         if (msg.sender != ownerOf(tokenId))
             revert Unauthorized("Only owner can burn badge");
 
@@ -68,24 +84,21 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         }
 
         _burn(tokenId);
-        emit BadgeBurned(msg.sender, withPrejudice);
+        emit BadgeBurned(false, withPrejudice);
     }
 
-    function mintBadge(
-        address _to,
-        uint256 level,
-        string calldata _tokenURI
-    ) external payable override entityOnly {
-        _tokenIds.increment();
-        uint256 newItemId = _tokenIds.current();
+    function burnAsEntity(uint256 tokenId) external override {
+        uint256 dateMinted = getDateForBadge(tokenId);
+        if (dateMinted == 0) revert Failure("Badge not minted");
 
-        _mint(_to, newItemId);
-        _setTokenURI(newItemId, _tokenURI);
+        // 2. Calculate time since Badge minted
+        uint256 timeSinceMinted = block.timestamp - dateMinted;
 
-        tokenIdToLevel[newItemId] = level;
-        idToDateMinted[newItemId] = block.timestamp;
+        if (timeSinceMinted > TIME_ALLOWED_TO_BURN)
+            revert Unauthorized("Badge can only be burned for first 30 days");
 
-        emit BadgeMinted(address(this), newItemId, level, _tokenURI);
+        _burn(tokenId);
+        emit BadgeBurned(true, false);
     }
 
     function bytesToAddress(bytes memory bys)
@@ -130,5 +143,14 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
     function getEntity() public view override returns (address) {
         return entity;
+    }
+
+    function getDateForBadge(uint256 tokenId)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return idToDateMinted[tokenId];
     }
 }

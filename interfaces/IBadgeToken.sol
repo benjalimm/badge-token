@@ -8,18 +8,20 @@ interface IBadgeToken {
         string tokenURI
     );
 
-    event BadgeBurned(address entityAddress, bool withPrejudice);
+    event BadgeBurned(bool byEntity, bool withPrejudice);
 
     error Unauthorized(string message);
     error Failure(string message);
-
-    function burn(uint256 tokenId, bool withPrejudice) external payable;
 
     function mintBadge(
         address _to,
         uint256 level,
         string calldata _tokenURI
-    ) external payable;
+    ) external;
+
+    function burnAsEntity(uint256 tokenId) external;
+
+    function getDateForBadge(uint256 tokenId) external view returns (uint256);
 
     function setNewEntity(address _entity) external;
 
