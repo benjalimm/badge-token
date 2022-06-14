@@ -20,6 +20,14 @@ contract Entity is IEntity {
     event EntityMigrated(address newEntity);
     event TokensMigrated(address newBadgeToken, address newPermToken);
 
+    // ** Permissions ** \\
+    enum PermLevel {
+        None,
+        Admin,
+        SuperAdmin,
+        Genesis
+    }
+
     // ** Entity info ** \\
     string public entityName;
     address public genesisTokenHolder;
@@ -60,9 +68,9 @@ contract Entity is IEntity {
             ).createPermissionToken(_entityName);
 
             // 4. Mint genesis token
-            IPermissionToken(permissionToken).mintAsEntity(
-                msg.sender,
-                3,
+            mintPermissionToken(
+                _genesisTokenHolder,
+                PermLevel.Genesis,
                 _genesisTokenURI
             );
         }
@@ -104,7 +112,7 @@ contract Entity is IEntity {
         address to,
         uint256 level,
         string calldata _tokenURI
-    ) external payable override admins {
+    ) external payable admins {
         require(level >= 0, "Level cannot be less than 0");
 
         // 1. Get Badge burn price
@@ -123,46 +131,36 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
-    // ** Convenience functions ** \\
-    function concat(string memory s1, string memory s2)
-        private
-        pure
-        returns (string memory)
-    {
-        return string(abi.encodePacked(s1, s2));
+    // ** Permission functions ** \\
+    function mintPermissionToken(
+        address to,
+        PermLevel level,
+        string memory _tokenURI
+    ) private {
+        IPermissionToken(permissionToken).mintAsEntity(
+            to,
+            uint256(level),
+            _tokenURI
+        );
     }
 
-    // ** Permission functions ** \\
     function assignPermissionToken(
         address assignee,
-        uint256 level,
+        PermLevel level,
         string calldata tokenURI
-    ) external override {
+    ) external {
         // 1. Get level of assigner
         uint256 assignerLevel = IPermissionToken(permissionToken)
             .getPermStatusForAdmin(msg.sender);
 
         // 2. Check if assigner has permission to assign
         require(
-            uint8(assignerLevel) > uint8(level),
-            concat(
-                "Assigner has no permission - ",
-                concat(
-                    concat(
-                        "Assigner: ",
-                        Strings.toString(uint8(assignerLevel))
-                    ),
-                    concat("Assignee: ", Strings.toString(uint8(level)))
-                )
-            )
+            assignerLevel > uint256(level),
+            "Can't assign permission with higher or equal level"
         );
 
         // 3. Assign
-        IPermissionToken(permissionToken).mintAsEntity(
-            assignee,
-            level,
-            tokenURI
-        );
+        mintPermissionToken(assignee, level, tokenURI);
     }
 
     function revokePermissionToken(address revokee) external genOrSuper {
@@ -210,13 +208,13 @@ contract Entity is IEntity {
 
         // 4. Assign new genesis token holder
         genesisTokenHolder = assignee;
-        IPermissionToken(permissionToken).mintAsEntity(assignee, 3, tokenURI);
+        mintPermissionToken(assignee, PermLevel.Genesis, tokenURI);
 
         // 5. Assign new super admin
         if (switchToSuper) {
-            IPermissionToken(permissionToken).mintAsEntity(
+            mintPermissionToken(
                 msg.sender,
-                2,
+                PermLevel.SuperAdmin,
                 superTokenURI
             );
         }

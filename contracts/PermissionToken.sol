@@ -77,28 +77,27 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
     }
 
     function mintAsEntity(
-        address _owner,
+        address assignee,
         uint256 level,
         string memory tokenURI
     ) external payable override entityOnly returns (uint256) {
-        if (ownerReverseRecord[_owner] != 0) {
+        if (ownerReverseRecord[assignee] != 0) {
             revert Failure("Owner already has a token");
         }
-        require(level >= 0 && level <= 3, "Invalid permission level");
-        permissionTokenHolders[_owner] = level;
-        return privateMint(_owner, tokenURI);
+        permissionTokenHolders[assignee] = level;
+        return privateMint(assignee, tokenURI);
     }
 
-    function revokePermission(address _owner) external override entityOnly {
-        uint256 id = ownerReverseRecord[_owner];
+    function revokePermission(address revokee) external override entityOnly {
+        uint256 id = ownerReverseRecord[revokee];
 
         if (id == 0) {
             revert Failure("Owner does not have a token");
         }
 
         // Delete records
-        delete permissionTokenHolders[_owner];
-        delete ownerReverseRecord[_owner];
+        delete permissionTokenHolders[revokee];
+        delete ownerReverseRecord[revokee];
 
         // Burn id
         _burn(id);

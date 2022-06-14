@@ -7,7 +7,7 @@ interface IPermissionToken {
     error Failure(string message);
 
     function mintAsEntity(
-        address _owner,
+        address assignee,
         uint256 level,
         string memory tokenURI
     ) external payable returns (uint256);
