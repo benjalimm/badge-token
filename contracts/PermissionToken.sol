@@ -24,7 +24,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
 
     // ***  *** //
 
-    mapping(address => uint256) public permissionTokenHolders;
+    mapping(address => uint256) public adminToPermLevel;
     mapping(address => uint256) public ownerReverseRecord;
 
     //** Pertinent addressess ** \\
@@ -84,7 +84,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         if (ownerReverseRecord[assignee] != 0) {
             revert Failure("Owner already has a token");
         }
-        permissionTokenHolders[assignee] = level;
+        adminToPermLevel[assignee] = level;
         return privateMint(assignee, tokenURI);
     }
 
@@ -96,7 +96,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         }
 
         // Delete records
-        delete permissionTokenHolders[revokee];
+        delete adminToPermLevel[revokee];
         delete ownerReverseRecord[revokee];
 
         // Burn id
@@ -114,7 +114,7 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         override
         returns (uint256 lvl)
     {
-        lvl = permissionTokenHolders[admin];
+        lvl = adminToPermLevel[admin];
     }
 
     // ** Setter functions ** \\
