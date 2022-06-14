@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./BadgeToken.sol";
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "../interfaces/IBadgeRegistry.sol";
@@ -61,7 +62,7 @@ contract Entity is IEntity {
             // 4. Mint genesis token
             IPermissionToken(permissionToken).mintAsEntity(
                 msg.sender,
-                PermLevel.GENESIS,
+                3,
                 _genesisTokenURI
             );
         }
@@ -81,21 +82,17 @@ contract Entity is IEntity {
         require(
             IPermissionToken(permissionToken).getPermStatusForAdmin(
                 msg.sender
-            ) ==
-                PermLevel.SUPER_ADMIN ||
-                genesisTokenHolder == msg.sender,
+            ) > 1,
             "Sender has no super user privilege"
         );
         _;
     }
 
     modifier admins() {
-        PermLevel level = IPermissionToken(permissionToken)
-            .getPermStatusForAdmin(msg.sender);
         require(
-            level == PermLevel.ADMIN ||
-                level == PermLevel.SUPER_ADMIN ||
-                genesisTokenHolder == msg.sender,
+            IPermissionToken(permissionToken).getPermStatusForAdmin(
+                msg.sender
+            ) > 0,
             "Sender has no admin privilege"
         );
         _;
@@ -126,18 +123,39 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
+    // ** Convenience functions ** \\
+    function concat(string memory s1, string memory s2)
+        private
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(s1, s2));
+    }
+
     // ** Permission functions ** \\
     function assignPermissionToken(
         address assignee,
-        PermLevel level,
+        uint256 level,
         string calldata tokenURI
     ) external override {
         // 1. Get level of assigner
-        PermLevel assignerLevel = IPermissionToken(permissionToken)
+        uint256 assignerLevel = IPermissionToken(permissionToken)
             .getPermStatusForAdmin(msg.sender);
 
         // 2. Check if assigner has permission to assign
-        require(assignerLevel > level, "Assigner has no permission");
+        require(
+            uint8(assignerLevel) > uint8(level),
+            concat(
+                "Assigner has no permission - ",
+                concat(
+                    concat(
+                        "Assigner: ",
+                        Strings.toString(uint8(assignerLevel))
+                    ),
+                    concat("Assignee: ", Strings.toString(uint8(level)))
+                )
+            )
+        );
 
         // 3. Assign
         IPermissionToken(permissionToken).mintAsEntity(
@@ -149,13 +167,16 @@ contract Entity is IEntity {
 
     function revokePermissionToken(address revokee) external genOrSuper {
         // 1. Get level of revoker
-        PermLevel revokerLevel = IPermissionToken(permissionToken)
+        uint256 revokerLevel = IPermissionToken(permissionToken)
             .getPermStatusForAdmin(msg.sender);
 
         // 2. Get level of revokee
-        PermLevel revokeeLevel = IPermissionToken(permissionToken)
+        uint256 revokeeLevel = IPermissionToken(permissionToken)
             .getPermStatusForAdmin(revokee);
-        require(revokerLevel > revokeeLevel, "Assigner has no permission");
+        require(
+            uint256(revokerLevel) > uint256(revokeeLevel),
+            "Assigner has no permission"
+        );
 
         // 3. Revoke permissions
         IPermissionToken(permissionToken).revokePermission(revokee);
@@ -174,9 +195,9 @@ contract Entity is IEntity {
         string memory superTokenURI
     ) external gen {
         // 1. Make sure assignee is an existing super admin
-        PermLevel assigneeLevel = IPermissionToken(permissionToken)
+        uint256 assigneeLevel = IPermissionToken(permissionToken)
             .getPermStatusForAdmin(assignee);
-        if (assigneeLevel != PermLevel.SUPER_ADMIN)
+        if (assigneeLevel != 2)
             revert Unauthorized(
                 "New genesis holder has to be at least a super admin"
             );
@@ -189,17 +210,13 @@ contract Entity is IEntity {
 
         // 4. Assign new genesis token holder
         genesisTokenHolder = assignee;
-        IPermissionToken(permissionToken).mintAsEntity(
-            assignee,
-            PermLevel.GENESIS,
-            tokenURI
-        );
+        IPermissionToken(permissionToken).mintAsEntity(assignee, 3, tokenURI);
 
         // 5. Assign new super admin
         if (switchToSuper) {
             IPermissionToken(permissionToken).mintAsEntity(
                 msg.sender,
-                PermLevel.SUPER_ADMIN,
+                2,
                 superTokenURI
             );
         }

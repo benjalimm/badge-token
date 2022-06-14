@@ -17,7 +17,7 @@ interface IEntity {
 
     function assignPermissionToken(
         address assignee,
-        PermLevel level,
+        uint256 level,
         string calldata tokenURI
     ) external;
 

@@ -10,14 +10,24 @@ import "./NonTransferableERC721.sol";
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;
 
-    //** Token info **//
+    //** Token info ** \\
     Counters.Counter private _ids;
 
-    //** Permission info **//
-    mapping(address => PermLevel) public permissionTokenHolders;
+    // ** Permission info ** \\
+
+    // *** User to permission level mapping *** //
+
+    /// 0 - NO PERMISSION
+    /// 1 - ADMIN: Can reward Badges
+    /// 2 - SUPER ADMIN: Can reward Badges and issue admin permission
+    /// 3 - GENESIS: ONLY ONE EXISTS. User has all privilege + can issue super admin permission
+
+    // ***  *** //
+
+    mapping(address => uint256) public permissionTokenHolders;
     mapping(address => uint256) public ownerReverseRecord;
 
-    //** Pertinent addressess **//
+    //** Pertinent addressess ** \\
     address public entity;
 
     constructor(string memory _entityName, address _entity)
@@ -68,12 +78,13 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
 
     function mintAsEntity(
         address _owner,
-        PermLevel level,
+        uint256 level,
         string memory tokenURI
     ) external payable override entityOnly returns (uint256) {
         if (ownerReverseRecord[_owner] != 0) {
             revert Failure("Owner already has a token");
         }
+        require(level >= 0 && level <= 3, "Invalid permission level");
         permissionTokenHolders[_owner] = level;
         return privateMint(_owner, tokenURI);
     }
@@ -102,9 +113,9 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
         external
         view
         override
-        returns (PermLevel)
+        returns (uint256 lvl)
     {
-        return permissionTokenHolders[admin];
+        lvl = permissionTokenHolders[admin];
     }
 
     // ** Setter functions ** \\

@@ -1,12 +1,6 @@
 pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 
-enum PermLevel {
-    ADMIN,
-    SUPER_ADMIN,
-    GENESIS
-}
-
 interface IPermissionToken {
     // ** Errors ** \\
     error Unauthorized(string message);
@@ -14,14 +8,14 @@ interface IPermissionToken {
 
     function mintAsEntity(
         address _owner,
-        PermLevel level,
+        uint256 level,
         string memory tokenURI
     ) external payable returns (uint256);
 
     function getPermStatusForAdmin(address admins)
         external
         view
-        returns (PermLevel);
+        returns (uint256);
 
     function setNewEntity(address _entity) external;
 
