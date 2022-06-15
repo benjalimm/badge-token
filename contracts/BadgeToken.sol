@@ -55,30 +55,35 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
     // ** Token functions ** \\
     function mintBadge(
-        address _to,
+        address to,
         uint256 level,
-        string calldata _tokenURI
+        string calldata tokenURI
     ) external override entityOnly {
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
-        _mint(_to, newItemId);
-        _setTokenURI(newItemId, _tokenURI);
+        _mint(to, newItemId);
+        _setTokenURI(newItemId, tokenURI);
 
         tokenIdToLevel[newItemId] = level;
         idToDateMinted[newItemId] = block.timestamp;
 
-        emit BadgeMinted(address(this), newItemId, level, _tokenURI);
+        emit BadgeMinted(address(this), newItemId, level, tokenURI);
     }
 
     function burn(uint256 tokenId, bool withPrejudice) external {
         if (msg.sender != ownerOf(tokenId))
             revert Unauthorized("Only owner can burn badge");
 
+        // Recipients have up to 30 days to burn token with prejudice
+        // Burning with prejudice gives the issuer a demerit point + compensates recipients a portion of the stake
         if (withPrejudice) {
-            if ((block.timestamp - idToDateMinted[tokenId]) <= 604800)
+            if (
+                (block.timestamp - idToDateMinted[tokenId]) >
+                TIME_ALLOWED_TO_BURN
+            )
                 revert Unauthorized(
-                    "burnWithPrejudice unauthorized after 7 days"
+                    "burnWithPrejudice unauthorized after 30 days"
                 );
             demeritPoints.increment();
         }
@@ -87,7 +92,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         emit BadgeBurned(false, withPrejudice);
     }
 
-    function burnAsEntity(uint256 tokenId) external override {
+    function burnAsEntity(uint256 tokenId) external override entityOnly {
         uint256 dateMinted = getDateForBadge(tokenId);
         if (dateMinted == 0) revert Failure("Badge not minted");
 
