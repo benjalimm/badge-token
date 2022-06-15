@@ -47,7 +47,7 @@ contract Entity is IEntity {
         address _genesisTokenHolder,
         string memory _genesisTokenURI,
         bool deployTokens
-    ) {
+    ) payable {
         console.log("Deployed new entity:", _entityName);
 
         // 1. Set pertinent info for entity
@@ -278,7 +278,9 @@ contract Entity is IEntity {
         /// Algo for calculating min stake
         /// As demerit points go up (from Badge being burned with prejudice).
         /// The stake required for goes up.
-        return (demeritPoints * (1 + ((demeritPoints ^ 2) / 10)));
+
+        return
+            (BASE_MINIMUM_STAKE * (1000 + ((demeritPoints**2) * 100))) / 1000;
     }
 
     // ** Migration functions ** \\
