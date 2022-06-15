@@ -29,6 +29,9 @@ contract BadgeRegistry is IBadgeRegistry {
     mapping(address => address) public permTokenEntityReverseRecord;
     mapping(address => bool) public certifiedRegistries;
 
+    // ** ** \\
+    uint256 public baseMinimumStake = 0.015 ether;
+
     constructor() {
         deployer = msg.sender;
         certifiedRegistries[address(this)] = true;
@@ -180,6 +183,10 @@ contract BadgeRegistry is IBadgeRegistry {
         return certifiedRegistries[_registry];
     }
 
+    function getBaseMinimumStake() external view override returns (uint256) {
+        return baseMinimumStake;
+    }
+
     // ** Setter functions ** \\
     function setTokenReverseRecords(address perm, address badge)
         external
@@ -229,5 +236,12 @@ contract BadgeRegistry is IBadgeRegistry {
         deployerOnly
     {
         certifiedRegistries[_certifiedRegistry] = _certified;
+    }
+
+    function setBaseMinimumStake(uint256 _baseMinimumStake)
+        external
+        deployerOnly
+    {
+        baseMinimumStake = _baseMinimumStake;
     }
 }

@@ -48,4 +48,6 @@ interface IBadgeRegistry {
         returns (bool);
 
     function setTokenReverseRecords(address perm, address badge) external;
+
+    function getBaseMinimumStake() external view returns (uint256);
 }
