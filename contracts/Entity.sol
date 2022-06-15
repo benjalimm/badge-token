@@ -131,6 +131,10 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
+    function burnBadge(uint256 id) external admins {
+        IBadgeToken(badgeToken).burnAsEntity(id);
+    }
+
     // ** Permission functions ** \\
     function mintPermissionToken(
         address to,
