@@ -10,6 +10,9 @@ import "./NonTransferableERC721.sol";
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
 
+    // ** Events ** \\
+    event StakeReceived(uint256 amount, bool minimumStakeMet);
+
     // ** Token info ** \\
     Counters.Counter private _tokenIds;
     mapping(uint256 => uint256) private tokenIdToLevel;
@@ -30,6 +33,23 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     ) NonTransferableERC721(concat(name_, " - Badges"), "BADGE") {
         entity = _entity;
         recoveryOracle = _recoveryOracle;
+    }
+
+    // ** Receive / Fallback ** \\
+    receive() external payable {
+        emit StakeReceived(
+            msg.value,
+            msg.value >=
+                IEntity(entity).calculateMinStake(demeritPoints.current())
+        );
+    }
+
+    fallback() external payable {
+        emit StakeReceived(
+            msg.value,
+            msg.value >=
+                IEntity(entity).calculateMinStake(demeritPoints.current())
+        );
     }
 
     // ** Modifiers ** \\
@@ -85,7 +105,12 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
                 revert Unauthorized(
                     "burnWithPrejudice unauthorized after 30 days"
                 );
+
+            // Increment demerit points -> Increases minimum stake required
             demeritPoints.increment();
+
+            // Send half of stake to the recipient
+            msg.sender.call{value: address(this).balance / 2}("");
         }
 
         _burn(tokenId);

@@ -47,7 +47,7 @@ contract Entity is IEntity {
         address _genesisTokenHolder,
         string memory _genesisTokenURI,
         bool deployTokens
-    ) payable {
+    ) {
         console.log("Deployed new entity:", _entityName);
 
         // 1. Set pertinent info for entity
@@ -118,7 +118,7 @@ contract Entity is IEntity {
     modifier minStakeReq() {
         require(
             // Allow for 2% slippage
-            badgeToken.balance >= ((98 * calculateMinStake()) / 100),
+            badgeToken.balance >= ((98 * getMinStake()) / 100),
             "Not enough stake"
         );
         _;
@@ -265,14 +265,20 @@ contract Entity is IEntity {
         return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
     }
 
-    function calculateMinStake() public view returns (uint256) {
-        // 1. Get demerit points
-        uint256 dp = IBadgeToken(badgeToken).getDemeritPoints();
+    function getMinStake() public view returns (uint256) {
+        return calculateMinStake(IBadgeToken(badgeToken).getDemeritPoints());
+    }
 
-        // 2. Algo for calculating min stake
+    function calculateMinStake(uint256 demeritPoints)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        /// Algo for calculating min stake
         /// As demerit points go up (from Badge being burned with prejudice).
         /// The stake required for goes up.
-        return (dp * (1 + ((dp ^ 2) / 10)));
+        return (demeritPoints * (1 + ((demeritPoints ^ 2) / 10)));
     }
 
     // ** Migration functions ** \\
