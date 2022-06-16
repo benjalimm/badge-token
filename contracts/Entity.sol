@@ -20,6 +20,9 @@ contract Entity is IEntity {
     event EntityMigrated(address newEntity);
     event TokensMigrated(address newBadgeToken, address newPermToken);
 
+    // ** Constants ** \\
+    uint256 public immutable BASE_MINIMUM_STAKE;
+
     // ** Permissions ** \\
     enum PermLevel {
         None,
@@ -51,6 +54,8 @@ contract Entity is IEntity {
         badgeRegistry = _badgeRegistry;
         entityName = _entityName;
         genesisTokenHolder = _genesisTokenHolder;
+        BASE_MINIMUM_STAKE = IBadgeRegistry(_badgeRegistry)
+            .getBaseMinimumStake();
 
         if (deployTokens) {
             // 2. Create Badge token contract
@@ -78,6 +83,7 @@ contract Entity is IEntity {
 
     // ** Modifiers ** \\
 
+    /// Genesis user only ///
     modifier gen() {
         require(
             msg.sender == genesisTokenHolder,
@@ -86,6 +92,7 @@ contract Entity is IEntity {
         _;
     }
 
+    /// Super admins and higher only ///
     modifier genOrSuper() {
         require(
             IPermissionToken(permissionToken).getPermStatusForAdmin(
@@ -96,6 +103,7 @@ contract Entity is IEntity {
         _;
     }
 
+    /// Admins only ///
     modifier admins() {
         require(
             IPermissionToken(permissionToken).getPermStatusForAdmin(
@@ -106,13 +114,24 @@ contract Entity is IEntity {
         _;
     }
 
-    // ** Entity functions ** \\
+    /// Minimum ETH stake required in Badge token ///
+    modifier minStakeReq() {
+        require(
+            // Allow for 2% slippage
+            badgeToken.balance >= ((98 * getMinStake()) / 100),
+            "Not enough stake"
+        );
+        _;
+    }
 
+    // ** Badge functions ** \\
+
+    /// Mint Badge - For admins ///
     function mintBadge(
         address to,
         uint256 level,
         string calldata _tokenURI
-    ) external payable admins {
+    ) external payable admins minStakeReq {
         require(level >= 0, "Level cannot be less than 0");
 
         // 1. Get Badge burn price
@@ -131,11 +150,14 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
     }
 
-    function burnBadge(uint256 id) external admins {
+    /// Burn Badge - For admins ///
+    function burnBadge(uint256 id) external admins minStakeReq {
         IBadgeToken(badgeToken).burnAsEntity(id);
     }
 
     // ** Permission functions ** \\
+
+    /// Mint Permission - Convert level enum to uint256 ///
     function mintPermissionToken(
         address to,
         PermLevel level,
@@ -243,8 +265,25 @@ contract Entity is IEntity {
         return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
     }
 
-    // ** Setter functions ** \\
+    function getMinStake() public view returns (uint256) {
+        return calculateMinStake(IBadgeToken(badgeToken).getDemeritPoints());
+    }
 
+    function calculateMinStake(uint256 demeritPoints)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        /// Algo for calculating min stake
+        /// As demerit points go up (from Badge being burned with prejudice).
+        /// The stake required for goes up.
+
+        return
+            (BASE_MINIMUM_STAKE * (1000 + ((demeritPoints**2) * 100))) / 1000;
+    }
+
+    // ** Migration functions ** \\
     function migrateToEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))

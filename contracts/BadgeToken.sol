@@ -10,6 +10,9 @@ import "./NonTransferableERC721.sol";
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
 
+    // ** Events ** \\
+    event StakeReceived(uint256 amount, bool minimumStakeMet);
+
     // ** Token info ** \\
     Counters.Counter private _tokenIds;
     mapping(uint256 => uint256) private tokenIdToLevel;
@@ -30,6 +33,23 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     ) NonTransferableERC721(concat(name_, " - Badges"), "BADGE") {
         entity = _entity;
         recoveryOracle = _recoveryOracle;
+    }
+
+    // ** Receive / Fallback ** \\
+    receive() external payable {
+        emit StakeReceived(
+            msg.value,
+            msg.value >=
+                IEntity(entity).calculateMinStake(demeritPoints.current())
+        );
+    }
+
+    fallback() external payable {
+        emit StakeReceived(
+            msg.value,
+            msg.value >=
+                IEntity(entity).calculateMinStake(demeritPoints.current())
+        );
     }
 
     // ** Modifiers ** \\
@@ -72,11 +92,19 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     function burn(uint256 tokenId, bool withPrejudice) external {
+        // 1. Check ownership
         if (msg.sender != ownerOf(tokenId))
             revert Unauthorized("Only owner can burn badge");
 
-        // Recipients have up to 30 days to burn token with prejudice
-        // Burning with prejudice gives the issuer a demerit point + compensates recipients a portion of the stake
+        // 2. We burn the Badge before doing anything else
+        /// This prevents any possible re-entrancy attacks if the Badge is burned with prejudice (As funds are compensated to the burning entity)
+        _burn(tokenId);
+
+        // 3. Check if burned with prejudice
+
+        /// Recipients have up to 30 days to burn token with prejudice
+        /// Burning with prejudice gives the issuer a demerit point + compensates recipients 50% portion of the stake
+        /// An increase in demerit points results in a higher minimum stake
         if (withPrejudice) {
             if (
                 (block.timestamp - idToDateMinted[tokenId]) >
@@ -85,10 +113,14 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
                 revert Unauthorized(
                     "burnWithPrejudice unauthorized after 30 days"
                 );
+
+            // Increment demerit points -> Increases minimum stake required
             demeritPoints.increment();
+
+            // Send half of stake to the recipient
+            msg.sender.call{value: address(this).balance / 2}("");
         }
 
-        _burn(tokenId);
         emit BadgeBurned(false, withPrejudice);
     }
 

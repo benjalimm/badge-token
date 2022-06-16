@@ -11,10 +11,24 @@ import "../interfaces/IBadgePriceCalculator.sol";
 import "../interfaces/IEntity.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
-    uint256 public levelMultiplierX1000 = 2500;
-    address public deployer;
+    // ** Enums ** \\
+    enum EntityReverseRecordType {
+        BadgeToken,
+        PermissionToken
+    }
+    // ** Events ** \\
+    event EntityRegistered(
+        address entityAddress,
+        string entityName,
+        address genesisTokenHolder
+    );
+
+    // ** Errors ** \\
+    error Unauthorized(string message);
+    error Failure(string message);
 
     // ** Pertinent addresses ** \\
+    address public deployer;
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
@@ -28,6 +42,9 @@ contract BadgeRegistry is IBadgeRegistry {
     mapping(address => address) public badgeTokenEntityReverseRecord;
     mapping(address => address) public permTokenEntityReverseRecord;
     mapping(address => bool) public certifiedRegistries;
+
+    // ** ** \\
+    uint256 public baseMinimumStake = 0.015 ether;
 
     constructor() {
         deployer = msg.sender;
@@ -52,7 +69,7 @@ contract BadgeRegistry is IBadgeRegistry {
         string calldata entityName,
         string calldata genesisTokenURI,
         bool deployTokens
-    ) external override {
+    ) external payable {
         // 1. Deploy entity
         IEntity entity = IEntityFactory(entityFactory).createEntity(
             entityName,
@@ -67,18 +84,24 @@ contract BadgeRegistry is IBadgeRegistry {
         entities[entityAddress] = true;
 
         if (deployTokens) {
-            // 3. Store badge token reverse record
+            // 3. Ensure there is enough ether to stake
+            require(msg.value >= baseMinimumStake, "Not enough stake");
+            (bool success, ) = entity.getBadgeToken().call{value: msg.value}(
+                ""
+            );
+            require(success, "Failed to send eth to badge token");
+
+            // 4. Store badge token reverse record
             badgeTokenEntityReverseRecord[
                 entity.getBadgeToken()
             ] = entityAddress;
 
-            // 4. Store permission token reverse record
+            // 5. Store permission token reverse record
             permTokenEntityReverseRecord[
                 entity.getPermissionToken()
             ] = entityAddress;
         }
 
-        // 5. Emit entity registered
         emit EntityRegistered(entityAddress, entityName, msg.sender);
     }
 
@@ -158,15 +181,6 @@ contract BadgeRegistry is IBadgeRegistry {
         return badgeGnosisSafe;
     }
 
-    function getLevelMultiplierX1000()
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return levelMultiplierX1000;
-    }
-
     function getRecoveryOracle() external view override returns (address) {
         return recoveryOracle;
     }
@@ -178,6 +192,10 @@ contract BadgeRegistry is IBadgeRegistry {
         returns (bool)
     {
         return certifiedRegistries[_registry];
+    }
+
+    function getBaseMinimumStake() external view override returns (uint256) {
+        return baseMinimumStake;
     }
 
     // ** Setter functions ** \\
@@ -229,5 +247,12 @@ contract BadgeRegistry is IBadgeRegistry {
         deployerOnly
     {
         certifiedRegistries[_certifiedRegistry] = _certified;
+    }
+
+    function setBaseMinimumStake(uint256 _baseMinimumStake)
+        external
+        deployerOnly
+    {
+        baseMinimumStake = _baseMinimumStake;
     }
 }

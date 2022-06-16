@@ -12,4 +12,9 @@ interface IEntity {
     function getPermissionToken() external view returns (address);
 
     function getBadgeToken() external view returns (address);
+
+    function calculateMinStake(uint256 demeritPoints)
+        external
+        view
+        returns (uint256);
 }
