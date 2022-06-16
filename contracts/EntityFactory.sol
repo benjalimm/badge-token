@@ -5,6 +5,9 @@ import "./Entity.sol";
 import "../interfaces/IEntityFactory.sol";
 
 contract EntityFactory is IEntityFactory {
+    // ** Events ** \\
+    event EntityDeployed(string entityName, address entityAddress);
+
     address public badgeRegistry;
 
     constructor(address _badgeRegistry) {

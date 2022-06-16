@@ -1,22 +1,10 @@
 pragma solidity ^0.8.4;
 
 interface IBadgeToken {
-    event BadgeMinted(
-        address entity,
-        uint256 tokenId,
-        uint256 level,
-        string tokenURI
-    );
-
-    event BadgeBurned(bool byEntity, bool withPrejudice);
-
-    error Unauthorized(string message);
-    error Failure(string message);
-
     function mintBadge(
-        address _to,
+        address to,
         uint256 level,
-        string calldata _tokenURI
+        string calldata tokenURI
     ) external;
 
     function burnAsEntity(uint256 tokenId) external;

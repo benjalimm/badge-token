@@ -2,6 +2,14 @@ pragma solidity ^0.8.4;
 import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeRecoveryOracle is IBadgeRecoveryOracle {
+    // ** Events ** \\
+    event RecoveryAddressSet(address initialAddress, address recoveryAddress);
+
+    // ** Errors ** \\
+    error RecoveryAddressAlreadySet(address recoveryAddress);
+    error RecoveryAddressSameAsSender();
+
+    // ** REcovery a ** \\
     mapping(address => address) public recoveryAddressMap;
 
     function setRecoveryAddress(address _recoveryAddress) external override {

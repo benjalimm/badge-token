@@ -11,6 +11,4 @@ interface IEntityFactory {
         string calldata genesisTokenURI,
         bool deployTokens
     ) external returns (IEntity);
-
-    event EntityDeployed(string entityName, address entityAddress);
 }

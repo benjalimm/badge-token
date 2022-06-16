@@ -5,10 +5,4 @@ interface IBadgeTokenFactory {
         string calldata _entityName,
         address recoveryOracle
     ) external returns (address);
-
-    event BadgeTokenDeployed(
-        string entityName,
-        address entityAddress,
-        address contractAddress
-    );
 }

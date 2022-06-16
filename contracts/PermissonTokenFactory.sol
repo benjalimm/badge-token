@@ -4,6 +4,8 @@ import "./PermissionToken.sol";
 import "../interfaces/IPermissionTokenFactory.sol";
 
 contract PermissionTokenFactory is IPermissionTokenFactory {
+    event PermissionTokenDeployed(string entityName, address entityAddress);
+
     address public badgeRegistry;
 
     function createPermissionToken(string calldata _entityName)

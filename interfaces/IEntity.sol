@@ -2,10 +2,6 @@ pragma solidity ^0.8.4;
 import "./IPermissionToken.sol";
 
 interface IEntity {
-    // ** Errors ** \\
-    error Unauthorized(string message);
-    error Failure(string message);
-
     // ** Functions ** \\
     function getBadgeRegistry() external view returns (address);
 

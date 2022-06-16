@@ -6,12 +6,22 @@ import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "./NonTransferableERC721.sol";
+import "./CommonErrors.sol";
 
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
 
     // ** Events ** \\
     event StakeReceived(uint256 amount, bool minimumStakeMet);
+
+    event BadgeMinted(
+        address entity,
+        uint256 tokenId,
+        uint256 level,
+        string tokenURI
+    );
+
+    event BadgeBurned(bool byEntity, bool withPrejudice);
 
     // ** Token info ** \\
     Counters.Counter private _tokenIds;
