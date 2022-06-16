@@ -7,8 +7,9 @@ import "./BadgeToken.sol";
 import "./PermissionToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IEntityFactory.sol";
-import "../interfaces/IBadgePriceCalculator.sol";
+import "../interfaces/IBadgePriceOracle.sol";
 import "../interfaces/IEntity.sol";
+import "./CommonErrors.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
     // ** Enums ** \\
@@ -23,10 +24,6 @@ contract BadgeRegistry is IBadgeRegistry {
         address genesisTokenHolder
     );
 
-    // ** Errors ** \\
-    error Unauthorized(string message);
-    error Failure(string message);
-
     // ** Pertinent addresses ** \\
     address public deployer;
     address public entityFactory;
@@ -34,7 +31,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public permissionTokenFactory;
     address public badgeXPToken;
     address public badgeGnosisSafe = address(0);
-    address public badgePriceCalculator;
+    address public badgePriceOracle;
     address public recoveryOracle;
 
     // ** Registry info ** \\
@@ -150,10 +147,7 @@ contract BadgeRegistry is IBadgeRegistry {
         override
         returns (uint256)
     {
-        return
-            IBadgePriceCalculator(badgePriceCalculator).calculateBadgePrice(
-                level
-            );
+        return IBadgePriceOracle(badgePriceOracle).calculateBadgePrice(level);
     }
 
     function getBadgeTokenFactory() external view override returns (address) {
@@ -231,11 +225,11 @@ contract BadgeRegistry is IBadgeRegistry {
         badgeXPToken = _badgeXPToken;
     }
 
-    function setBadgePriceCalculator(address _badgePriceCalculator)
+    function setBadgePriceOracle(address _badgePriceOracle)
         external
         deployerOnly
     {
-        badgePriceCalculator = _badgePriceCalculator;
+        badgePriceOracle = _badgePriceOracle;
     }
 
     function setRecoveryOracle(address _recoveryOracle) external deployerOnly {

@@ -6,6 +6,7 @@ import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "../interfaces/IBadgeXPOracle.sol";
+import "./CommonErrors.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     address public deployer;

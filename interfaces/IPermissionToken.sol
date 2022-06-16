@@ -2,10 +2,6 @@ pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 
 interface IPermissionToken {
-    // ** Errors ** \\
-    error Unauthorized(string message);
-    error Failure(string message);
-
     function mintAsEntity(
         address assignee,
         uint256 level,

@@ -3,6 +3,12 @@ import "./BadgeToken.sol";
 import "../interfaces/IBadgeTokenFactory.sol";
 
 contract BadgeTokenFactory is IBadgeTokenFactory {
+    event BadgeTokenDeployed(
+        string entityName,
+        address entityAddress,
+        address contractAddress
+    );
+
     function createBadgeToken(
         string calldata entityName,
         address recoveryOracle

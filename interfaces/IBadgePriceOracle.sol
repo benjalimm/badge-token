@@ -1,5 +1,5 @@
 pragma solidity ^0.8.4;
 
-interface IBadgePriceCalculator {
+interface IBadgePriceOracle {
     function calculateBadgePrice(uint256 level) external view returns (uint256);
 }

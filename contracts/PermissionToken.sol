@@ -6,6 +6,7 @@ import "../interfaces/IPermissionToken.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "./NonTransferableERC721.sol";
+import "./CommonErrors.sol";
 
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;

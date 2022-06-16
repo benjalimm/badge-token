@@ -134,7 +134,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
      * @dev See {IERC721-approve}.
      */
     function approve(address to, uint256 tokenId) public virtual override {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     /**
@@ -146,7 +146,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
         override
         returns (address)
     {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     /**
@@ -156,7 +156,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
         public
         override
     {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     /**
@@ -177,7 +177,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
         address to,
         uint256 tokenId
     ) public override {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     function safeTransferFrom(
@@ -186,7 +186,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
         uint256 tokenId,
         bytes calldata _data
     ) public override {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     function safeTransferFrom(
@@ -194,7 +194,7 @@ contract NonTransferableERC721 is ERC165, IERC721, IERC721Metadata {
         address to,
         uint256 tokenId
     ) public override {
-        revert Blocked("Badges are non-transferable");
+        revert Blocked("Non-transferable");
     }
 
     function _burn(uint256 tokenId) internal virtual {
