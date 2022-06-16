@@ -47,7 +47,7 @@ contract Entity is IEntity {
         address _genesisTokenHolder,
         string memory _genesisTokenURI,
         bool deployTokens
-    ) payable {
+    ) {
         console.log("Deployed new entity:", _entityName);
 
         // 1. Set pertinent info for entity

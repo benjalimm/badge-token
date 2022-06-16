@@ -92,11 +92,19 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     function burn(uint256 tokenId, bool withPrejudice) external {
+        // 1. Check ownership
         if (msg.sender != ownerOf(tokenId))
             revert Unauthorized("Only owner can burn badge");
 
-        // Recipients have up to 30 days to burn token with prejudice
-        // Burning with prejudice gives the issuer a demerit point + compensates recipients a portion of the stake
+        // 2. We burn the Badge before doing anything else
+        /// This prevents any possible re-entrancy attacks if the Badge is burned with prejudice (As funds are compensated to the burning entity)
+        _burn(tokenId);
+
+        // 3. Check if burned with prejudice
+
+        /// Recipients have up to 30 days to burn token with prejudice
+        /// Burning with prejudice gives the issuer a demerit point + compensates recipients 50% portion of the stake
+        /// An increase in demerit points results in a higher minimum stake
         if (withPrejudice) {
             if (
                 (block.timestamp - idToDateMinted[tokenId]) >
@@ -113,7 +121,6 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
             msg.sender.call{value: address(this).balance / 2}("");
         }
 
-        _burn(tokenId);
         emit BadgeBurned(false, withPrejudice);
     }
 
