@@ -166,6 +166,15 @@ contract Entity is IEntity {
         IBadgeToken(badgeToken).burnAsEntity(id);
     }
 
+    /// BadgeToken can call this to burn XP points ///
+    /// For recipients to burn Badges, they need to do at the BadgeToken level .As only reg entities can call BadgeXP contract, we need to expose a function for the badgetoken to call
+    function burnXPAsBadgeToken(uint256 xp, address owner) external override {
+        if (msg.sender != badgeToken)
+            revert Unauthorized("Only BadgeToken can call  this");
+
+        IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
+    }
+
     // ** Permission functions ** \\
 
     /// Mint Permission - Convert level enum to uint256 ///
@@ -272,7 +281,7 @@ contract Entity is IEntity {
         return badgeToken;
     }
 
-    function getBadgeXPToken() private view returns (address) {
+    function getBadgeXPToken() public view override returns (address) {
         return IBadgeRegistry(badgeRegistry).getBadgeXPToken();
     }
 

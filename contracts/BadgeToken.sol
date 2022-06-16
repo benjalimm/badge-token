@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeRegistry.sol";
+import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IEntity.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "./NonTransferableERC721.sol";
@@ -90,6 +91,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     // ** Token functions ** \\
+
+    /// For entity to mint Badge ///
     function mintBadge(
         address to,
         uint256 level,
@@ -108,25 +111,54 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         emit BadgeMinted(address(this), newItemId, level, tokenURI);
     }
 
+    /// For entity to (attempt to) burn Badge ///
+    function burnAsEntity(uint256 tokenId) external override entityOnly {
+        uint256 dateMinted = getTimestampForBadge(tokenId);
+        if (dateMinted == 0) revert Failure("Badge not minted");
+
+        // 1. Calculate time since Badge minted
+        uint256 timeSinceMinted = block.timestamp - dateMinted;
+
+        // 2. Ensure time limit hasn't been reached
+        if (timeSinceMinted > TIME_ALLOWED_TO_BURN)
+            revert Unauthorized("Badge can only be burned for first 30 days");
+
+        // 3. Delete badge info
+        delete idToBadgeInfo[tokenId];
+
+        // 4. Burn
+        _burn(tokenId);
+        emit BadgeBurned(true, false);
+    }
+
+    /// For recipient to burn Badge ///
     function burn(uint256 tokenId, bool withPrejudice) external {
         // 1. Check ownership
         if (msg.sender != ownerOf(tokenId))
             revert Unauthorized("Only owner can burn badge");
 
+        // 2. Get Badge info
+        BadgeInfo memory info = idToBadgeInfo[tokenId];
+
         // 2. We burn the Badge before doing anything else
         /// This prevents any possible re-entrancy attacks if the Badge is burned with prejudice (As funds are compensated to the burning entity)
         _burn(tokenId);
 
-        // 3. Check if burned with prejudice
+        // 3. Attempt to burn associated Badge XP points
+        try IEntity(entity).burnXPAsBadgeToken(info.xp, msg.sender) {
+            // It succeeds - cool!
+        } catch {
+            // It didn't succeed - Whatever. It is more important for the sovereignty of the recipient that the burn function succeeds.
+            // We do not want to rely on anything on the Entity level as that is modular + could be altered to prevent tokens from getting burnt.
+        }
+
+        // 4. Check if burned with prejudice
 
         /// Recipients have up to 30 days to burn token with prejudice
         /// Burning with prejudice gives the issuer a demerit point + compensates recipients 50% portion of the stake
         /// An increase in demerit points results in a higher minimum stake
         if (withPrejudice) {
-            if (
-                (block.timestamp - getTimestampForBadge(tokenId)) >
-                TIME_ALLOWED_TO_BURN
-            )
+            if ((block.timestamp - info.timestamp) > TIME_ALLOWED_TO_BURN)
                 revert Unauthorized(
                     "burnWithPrejudice unauthorized after 30 days"
                 );
@@ -138,21 +170,10 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
             msg.sender.call{value: address(this).balance / 2}("");
         }
 
+        // 5. Delete badge info
+        delete idToBadgeInfo[tokenId];
+
         emit BadgeBurned(false, withPrejudice);
-    }
-
-    function burnAsEntity(uint256 tokenId) external override entityOnly {
-        uint256 dateMinted = getTimestampForBadge(tokenId);
-        if (dateMinted == 0) revert Failure("Badge not minted");
-
-        // 2. Calculate time since Badge minted
-        uint256 timeSinceMinted = block.timestamp - dateMinted;
-
-        if (timeSinceMinted > TIME_ALLOWED_TO_BURN)
-            revert Unauthorized("Badge can only be burned for first 30 days");
-
-        _burn(tokenId);
-        emit BadgeBurned(true, false);
     }
 
     function bytesToAddress(bytes memory bys)

@@ -9,8 +9,12 @@ interface IEntity {
 
     function getBadgeToken() external view returns (address);
 
+    function getBadgeXPToken() external view returns (address);
+
     function calculateMinStake(uint256 demeritPoints)
         external
         view
         returns (uint256);
+
+    function burnXPAsBadgeToken(uint256 xp, address owner) external;
 }
