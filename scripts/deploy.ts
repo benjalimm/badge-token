@@ -5,7 +5,7 @@
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 import {
-  BadgePriceCalculator,
+  BadgePriceOracle,
   BadgeRegistry,
   BadgeTokenFactory,
   BadgeXP,
@@ -250,32 +250,32 @@ async function main() {
   await waitForSetAmountOfTime();
 
   // 6. Deploy Badge Price Calculator
-  let badgePriceCalculator: BadgePriceCalculator;
+  let badgePriceOracle: BadgePriceOracle;
   try {
-    const badgePriceCalculatorContract = await ethers.getContractFactory(
-      "BadgePriceCalculator"
+    const badgePriceOracleContract = await ethers.getContractFactory(
+      "BadgePriceOracle"
     );
-    console.log("Attempting to deploy BadgePriceCalculator...");
-    badgePriceCalculator = await badgePriceCalculatorContract.deploy();
-    await badgePriceCalculator.deployed();
+    console.log("Attempting to deploy BadgePriceOracle...");
+    badgePriceOracle = await badgePriceOracleContract.deploy();
+    await badgePriceOracle.deployed();
     console.log(
-      "Successfully deployed BadgePriceCalculator to address: ",
-      badgePriceCalculator.address
+      "Successfully deployed BadgePriceOracle to address: ",
+      badgePriceOracle.address
     );
   } catch (e) {
-    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+    throw new Error(`Failed to deploy BadgePriceOracle due to error: ${e}`);
   }
 
   await waitForSetAmountOfTime();
 
   // 6.1 Set BadgePrice calculator
   try {
-    console.log("Attempting to set BadgePriceCalculator in badge registry...");
-    await badgeRegistry.setBadgePriceCalculator(badgePriceCalculator.address);
-    console.log("Successfully set BadgePriceCalculator in badge registry.");
+    console.log("Attempting to set BadgePriceOracle in badge registry...");
+    await badgeRegistry.setBadgePriceOracle(badgePriceOracle.address);
+    console.log("Successfully set BadgePriceOracle in badge registry.");
   } catch (e) {
     throw new Error(
-      `Failed to set BadgePriceCalculator in badge registry due to error: ${e}`
+      `Failed to set BadgePriceOracle in badge registry due to error: ${e}`
     );
   }
 
