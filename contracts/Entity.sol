@@ -13,6 +13,7 @@ import "../interfaces/IPermissionTokenFactory.sol";
 import "../interfaces/IBadgeToken.sol";
 import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IEntity.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Entity is IEntity {
     // ** Events ** \\
@@ -143,15 +144,25 @@ contract Entity is IEntity {
         (bool success, ) = safe.call{value: badgePrice}("");
         require(success, "Call to safe failed");
 
-        // 3. Mint badge
-        IBadgeToken(badgeToken).mintBadge(to, level, _tokenURI);
+        // 3. Mint BadgeXP points
+        uint256 xp = IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
 
-        // 4. Mint BadgeXP points
-        IBadgeXP(getBadgeXPToken()).mint(level, to, badgeRegistry);
+        // 4. Mint badge
+        IBadgeToken(badgeToken).mintBadge(to, level, xp, _tokenURI);
     }
 
     /// Burn Badge - For admins ///
     function burnBadge(uint256 id) external admins minStakeReq {
+        // 1. Get xp points
+        uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
+
+        // 2. Get owner
+        address owner = IERC721(badgeToken).ownerOf(id);
+
+        // 3. Burn XP
+        IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
+
+        // 4. Burn Badge
         IBadgeToken(badgeToken).burnAsEntity(id);
     }
 

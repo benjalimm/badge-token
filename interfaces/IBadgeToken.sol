@@ -4,12 +4,18 @@ interface IBadgeToken {
     function mintBadge(
         address to,
         uint256 level,
+        uint256 xp,
         string calldata tokenURI
     ) external;
 
     function burnAsEntity(uint256 tokenId) external;
 
-    function getDateForBadge(uint256 tokenId) external view returns (uint256);
+    function getTimestampForBadge(uint256 tokenId)
+        external
+        view
+        returns (uint256);
+
+    function getXPForBadge(uint256 tokenId) external view returns (uint256);
 
     function setNewEntity(address _entity) external;
 

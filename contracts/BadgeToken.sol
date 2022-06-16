@@ -23,10 +23,16 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
     event BadgeBurned(bool byEntity, bool withPrejudice);
 
+    // ** Structs ** \\
+    struct BadgeInfo {
+        uint256 level;
+        uint256 timestamp;
+        uint256 xp;
+    }
+
     // ** Token info ** \\
     Counters.Counter private _tokenIds;
-    mapping(uint256 => uint256) private tokenIdToLevel;
-    mapping(uint256 => uint256) private idToDateMinted;
+    mapping(uint256 => BadgeInfo) private idToBadgeInfo;
     Counters.Counter public demeritPoints;
 
     // ** Pertinent addresses ** \\
@@ -87,6 +93,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     function mintBadge(
         address to,
         uint256 level,
+        uint256 xp,
         string calldata tokenURI
     ) external override entityOnly {
         _tokenIds.increment();
@@ -95,8 +102,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         _mint(to, newItemId);
         _setTokenURI(newItemId, tokenURI);
 
-        tokenIdToLevel[newItemId] = level;
-        idToDateMinted[newItemId] = block.timestamp;
+        // Construct info
+        idToBadgeInfo[newItemId] = BadgeInfo(level, block.timestamp, xp);
 
         emit BadgeMinted(address(this), newItemId, level, tokenURI);
     }
@@ -117,7 +124,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         /// An increase in demerit points results in a higher minimum stake
         if (withPrejudice) {
             if (
-                (block.timestamp - idToDateMinted[tokenId]) >
+                (block.timestamp - getTimestampForBadge(tokenId)) >
                 TIME_ALLOWED_TO_BURN
             )
                 revert Unauthorized(
@@ -135,7 +142,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     function burnAsEntity(uint256 tokenId) external override entityOnly {
-        uint256 dateMinted = getDateForBadge(tokenId);
+        uint256 dateMinted = getTimestampForBadge(tokenId);
         if (dateMinted == 0) revert Failure("Badge not minted");
 
         // 2. Calculate time since Badge minted
@@ -192,12 +199,21 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         return entity;
     }
 
-    function getDateForBadge(uint256 tokenId)
+    function getTimestampForBadge(uint256 tokenId)
         public
         view
         override
         returns (uint256)
     {
-        return idToDateMinted[tokenId];
+        return idToBadgeInfo[tokenId].timestamp;
+    }
+
+    function getXPForBadge(uint256 tokenId)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return idToBadgeInfo[tokenId].xp;
     }
 }
