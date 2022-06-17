@@ -5,7 +5,7 @@ interface IBadgeXP {
         uint256 level,
         address recipient,
         address registry
-    ) external;
+    ) external returns (uint256 xp);
 
     function burn(
         uint256 amount,

@@ -99,8 +99,8 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         uint256 level,
         address recipient,
         address registry
-    ) external override registered(registry) {
-        uint256 xp = IBadgeXPOracle(xpOracle).calculateXP(level);
+    ) external override registered(registry) returns (uint256 xp) {
+        xp = IBadgeXPOracle(xpOracle).calculateXP(level);
         balance[recipient] += xp;
         totalXP += xp;
         emit Transfer(msg.sender, recipient, xp);
