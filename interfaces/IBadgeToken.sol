@@ -10,6 +10,8 @@ interface IBadgeToken {
 
     function burnAsEntity(uint256 tokenId) external;
 
+    function resetBadgeURI(uint256 tokenId, string memory tokenURI) external;
+
     function getTimestampForBadge(uint256 tokenId)
         external
         view

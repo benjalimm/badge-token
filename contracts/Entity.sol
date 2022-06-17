@@ -166,6 +166,15 @@ contract Entity is IEntity {
         IBadgeToken(badgeToken).burnAsEntity(id);
     }
 
+    /// Reset Badge URI - For admins ///
+    function resetBadgeURI(uint256 id, string memory tokenURI)
+        external
+        admins
+        minStakeReq
+    {
+        IBadgeToken(badgeToken).resetBadgeURI(id, tokenURI);
+    }
+
     /// BadgeToken can call this to burn XP points ///
     /// For recipients to burn Badges, they need to do at the BadgeToken level .As only reg entities can call BadgeXP contract, we need to expose a function for the badgetoken to call
     function burnXPAsBadgeToken(uint256 xp, address owner) external override {
