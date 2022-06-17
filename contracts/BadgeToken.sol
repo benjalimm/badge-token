@@ -24,6 +24,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
     event BadgeBurned(bool byEntity, bool withPrejudice);
 
+    event BadgeURIReset(string from, string to);
+
     // ** Structs ** \\
     struct BadgeInfo {
         uint256 level;
@@ -129,6 +131,30 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         // 4. Burn
         _burn(tokenId);
         emit BadgeBurned(true, false);
+    }
+
+    function resetBadgeURI(uint256 tokenId, string memory tokenURI)
+        external
+        override
+        entityOnly
+    {
+        uint256 dateMinted = getTimestampForBadge(tokenId);
+        if (dateMinted == 0) revert Failure("Badge not minted");
+
+        // 1. Calculate time since Badge minted
+        uint256 timeSinceMinted = block.timestamp - dateMinted;
+
+        // 2. Ensure time limit hasn't been reached
+        if (timeSinceMinted > TIME_ALLOWED_TO_BURN / 2)
+            revert Unauthorized("URI can only be reset for first 15 days");
+
+        // 3. Get old tokenURI
+        string memory oldTokenURI = _tokenURIs[tokenId];
+
+        // 4. Set new token URI
+        _setTokenURI(tokenId, tokenURI);
+
+        emit BadgeURIReset(oldTokenURI, tokenURI);
     }
 
     /// For recipient to burn Badge ///
