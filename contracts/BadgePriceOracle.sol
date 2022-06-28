@@ -4,7 +4,7 @@ import "hardhat/console.sol";
 import "../interfaces/IBadgePriceOracle.sol";
 
 contract BadgePriceOracle is IBadgePriceOracle {
-    uint256 public baseBadgePrice = 2649000000000000;
+    uint256 public baseBadgePrice = 0.0035 ether;
     uint256 public levelMultiplierX1000 = 2500;
 
     address public deployer;
