@@ -21,7 +21,9 @@ contract BadgeRegistry is IBadgeRegistry {
     event EntityRegistered(
         address entityAddress,
         string entityName,
-        address genesisTokenHolder
+        address genesisTokenHolder,
+        address permissionToken,
+        address badgeToken
     );
 
     // ** Pertinent addresses ** \\
@@ -80,26 +82,33 @@ contract BadgeRegistry is IBadgeRegistry {
         // 2. Set entity address in registry
         entities[entityAddress] = true;
 
+        address badgeToken;
+        address permToken;
+
         if (deployTokens) {
             // 3. Ensure there is enough ether to stake
             require(msg.value >= baseMinimumStake, "Not enough stake");
-            (bool success, ) = entity.getBadgeToken().call{value: msg.value}(
-                ""
-            );
+
+            badgeToken = entity.getBadgeToken();
+            permToken = entity.getPermissionToken();
+
+            (bool success, ) = badgeToken.call{value: msg.value}("");
             require(success, "Failed to send eth to badge token");
 
             // 4. Store badge token reverse record
-            badgeTokenEntityReverseRecord[
-                entity.getBadgeToken()
-            ] = entityAddress;
+            badgeTokenEntityReverseRecord[badgeToken] = entityAddress;
 
             // 5. Store permission token reverse record
-            permTokenEntityReverseRecord[
-                entity.getPermissionToken()
-            ] = entityAddress;
+            permTokenEntityReverseRecord[permToken] = entityAddress;
         }
 
-        emit EntityRegistered(entityAddress, entityName, msg.sender);
+        emit EntityRegistered(
+            entityAddress,
+            entityName,
+            msg.sender,
+            permToken,
+            badgeToken
+        );
     }
 
     /**
