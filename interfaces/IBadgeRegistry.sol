@@ -15,7 +15,7 @@ interface IBadgeRegistry {
 
     function getBadgeXPToken() external view returns (address);
 
-    function getBadgePrice(uint256 level) external view returns (uint256);
+    function getBadgePrice(uint8 level) external view returns (uint256);
 
     function getSafe() external view returns (address);
 

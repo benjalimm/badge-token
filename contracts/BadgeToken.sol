@@ -28,7 +28,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
     // ** Structs ** \\
     struct BadgeInfo {
-        uint256 level;
+        uint8 level;
         uint256 timestamp;
         uint256 xp;
     }
@@ -97,7 +97,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     /// For entity to mint Badge ///
     function mintBadge(
         address to,
-        uint256 level,
+        uint8 level,
         uint256 xp,
         string calldata tokenURI
     ) external override entityOnly {

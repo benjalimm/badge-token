@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 interface IBadgeToken {
     function mintBadge(
         address to,
-        uint256 level,
+        uint8 level,
         uint256 xp,
         string calldata tokenURI
     ) external;
