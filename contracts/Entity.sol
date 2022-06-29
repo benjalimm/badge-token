@@ -82,6 +82,15 @@ contract Entity is IEntity {
         }
     }
 
+    // ** Convenience functions ** \\
+    function concat(string memory s1, string memory s2)
+        private
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(s1, s2));
+    }
+
     // ** Modifiers ** \\
 
     /// Genesis user only ///
@@ -130,14 +139,23 @@ contract Entity is IEntity {
     /// Mint Badge - For admins ///
     function mintBadge(
         address to,
-        uint256 level,
+        uint8 level,
         string calldata _tokenURI
     ) external payable admins minStakeReq {
         require(level >= 0, "Level cannot be less than 0");
 
-        // 1. Get Badge burn price
+        // 1. Get Badge mint price based on level
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
-        require(msg.value >= badgePrice, "Not enough ETH");
+        require(
+            msg.value >= badgePrice,
+            concat(
+                "Not enough ETH: ",
+                concat(
+                    concat("Badge price - ", Strings.toString(badgePrice)),
+                    concat("value - ", Strings.toString(msg.value))
+                )
+            )
+        );
 
         // 2. Send eth to contract
         address safe = IBadgeRegistry(badgeRegistry).getSafe();

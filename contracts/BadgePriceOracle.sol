@@ -5,7 +5,7 @@ import "../interfaces/IBadgePriceOracle.sol";
 
 contract BadgePriceOracle is IBadgePriceOracle {
     uint256 public baseBadgePrice = 0.0035 ether;
-    uint256 public levelMultiplierX1000 = 2500;
+    uint256 public levelMultiplierX100 = 250; // Represents 2.5x
 
     address public deployer;
 
@@ -13,18 +13,37 @@ contract BadgePriceOracle is IBadgePriceOracle {
         deployer = msg.sender;
     }
 
-    function calculateBadgePrice(uint256 level)
+    function pow(uint256 n, uint256 e) internal pure returns (uint256) {
+        if (e == 0) {
+            return 1;
+        } else if (e == 1) {
+            return n;
+        } else {
+            uint256 p = pow(n, e / 2);
+            p = p * p;
+            if (e % 2 == 1) {
+                p = p * n;
+            }
+            return p;
+        }
+    }
+
+    function calculateBadgePrice(uint8 level)
         external
         view
         override
         returns (uint256)
     {
-        if (level > 0) {
+        if (level == 1) {
+            return baseBadgePrice;
+        } else if (level > 1) {
             return
-                baseBadgePrice *
-                ((levelMultiplierX1000 ^ (level - 1)) / (1000 ^ (level - 1)));
+                ((baseBadgePrice / 10) *
+                    pow(levelMultiplierX100, (level - 1))) /
+                (pow(100, (level - 1)) / 10);
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     function setBaseBadgePrice(uint256 price) external {

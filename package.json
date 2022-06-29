@@ -35,6 +35,7 @@
   "dependencies": {
     "@opengsn/contracts": "^2.2.5",
     "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts-ethereum-package": "^3.0.0",
     "hardhat-contract-sizer": "^2.4.0"
   }
 }

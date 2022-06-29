@@ -150,7 +150,7 @@ contract BadgeRegistry is IBadgeRegistry {
         return entities[addr];
     }
 
-    function getBadgePrice(uint256 level)
+    function getBadgePrice(uint8 level)
         external
         view
         override
