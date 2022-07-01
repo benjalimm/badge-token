@@ -51,6 +51,10 @@ const config: HardhatUserConfig = {
       url: "https://optimism-mainnet.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
       accounts: [privateKey],
     },
+    ethereumRinkeby: {
+      url: "https://rinkeby.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
+      accounts: [privateKey],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
