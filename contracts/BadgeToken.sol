@@ -199,7 +199,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         /// Burning with prejudice gives the issuer a demerit point + compensates recipients 50% portion of the stake
         /// An increase in demerit points results in a higher minimum stake
         if (withPrejudice) {
-            if ((block.timestamp - info.timestamp) > TIME_ALLOWED_TO_BURN)
+            if ((block.timestamp - info.timestamp) > (TIME_ALLOWED_TO_BURN * 2))
                 revert Unauthorized(
                     "burnWithPrejudice unauthorized after 30 days"
                 );
