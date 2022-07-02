@@ -142,7 +142,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         emit Transfer(recipient, address(0), amount);
     }
 
-    function resetTokens(
+    function resetXP(
         uint256 amount,
         address from,
         address to,

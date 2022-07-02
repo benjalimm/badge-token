@@ -20,6 +20,7 @@ contract Entity is IEntity {
     event GenesisTokenReassigned(address from, address to);
     event EntityMigrated(address newEntity);
     event TokensMigrated(address newBadgeToken, address newPermToken);
+    event RecipientReset(address from, address to);
 
     // ** Constants ** \\
     uint256 public immutable BASE_MINIMUM_STAKE;
@@ -193,19 +194,27 @@ contract Entity is IEntity {
         IBadgeToken(badgeToken).resetBadgeURI(id, tokenURI);
     }
 
-    function resetBadgeRecipient(uint256 id, address recipient)
+    function resetBadgeRecipient(uint256 id, address to)
         external
         admins
         minStakeReq
     {
         // 1. Get xp points
         uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
-
+        address previousRecipient = IERC721(badgeToken).ownerOf(id);
         // 2. Reset Badge recipient
-        IBadgeToken(badgeToken).resetBadgeRecipient(id, recipient);
+        IBadgeToken(badgeToken).resetBadgeRecipient(id, to);
         /// Step 1 will ensure that the change can only be made within the time limit. Hence, if this is made outside the time limit (15 days), this first method will fail.
 
         // 2. Reset BadgeXP points
+        IBadgeXP(getBadgeXPToken()).resetXP(
+            xp,
+            previousRecipient,
+            to,
+            badgeRegistry
+        );
+
+        emit RecipientReset(previousRecipient, to);
     }
 
     /// BadgeToken can call this to burn XP points ///

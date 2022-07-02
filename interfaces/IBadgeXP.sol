@@ -13,7 +13,7 @@ interface IBadgeXP {
         address registry
     ) external;
 
-    function resetTokens(
+    function resetXP(
         uint256 amount,
         address from,
         address to,
