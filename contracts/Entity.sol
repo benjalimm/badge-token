@@ -193,6 +193,21 @@ contract Entity is IEntity {
         IBadgeToken(badgeToken).resetBadgeURI(id, tokenURI);
     }
 
+    function resetBadgeRecipient(uint256 id, address recipient)
+        external
+        admins
+        minStakeReq
+    {
+        // 1. Get xp points
+        uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
+
+        // 2. Reset Badge recipient
+        IBadgeToken(badgeToken).resetBadgeRecipient(id, recipient);
+        /// Step 1 will ensure that the change can only be made within the time limit. Hence, if this is made outside the time limit (15 days), this first method will fail.
+
+        // 2. Reset BadgeXP points
+    }
+
     /// BadgeToken can call this to burn XP points ///
     /// For recipients to burn Badges, they need to do at the BadgeToken level .As only reg entities can call BadgeXP contract, we need to expose a function for the badgetoken to call
     function burnXPAsBadgeToken(uint256 xp, address owner) external override {

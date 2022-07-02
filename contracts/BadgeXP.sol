@@ -6,16 +6,19 @@ import "../interfaces/IBadgeRegistry.sol";
 import "../interfaces/IBadgeXP.sol";
 import "../interfaces/IBadgeRecoveryOracle.sol";
 import "../interfaces/IBadgeXPOracle.sol";
+import "../interfaces/IEntity.sol";
 import "./CommonErrors.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
     address public deployer;
 
-    // ** ERC20 properties ** \\
+    // ** ERC20 PROPERTIES ** \\
     uint256 public totalXP;
     mapping(address => uint256) public balance;
+    mapping(address => mapping(address => uint256))
+        public userToBadgeTokenLedger; // User => BadgeToken => Amount // Keep track of tokens that each issuer awards to each user
 
-    // ** Pertinent addressess ** \\
+    // ** RELATED CONTRACT ADDRESSES ** \\
     address public badgeRegistry;
     address public recoveryOracle;
     address public xpOracle;
@@ -26,12 +29,22 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         recoveryOracle = _recoveryOracle;
     }
 
-    // ** Modifiers ** \\
+    // ** MODIFIERS ** \\
     modifier registered(address _registry) {
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
             revert Unauthorized("Registry is not certified");
         if (!IBadgeRegistry(_registry).isRegistered(msg.sender))
             revert Unauthorized("Entity is not registered to registry");
+        _;
+    }
+
+    modifier restrictBurnAmount(uint256 amount, address recipient) {
+        // 1. Entity can only burn what they have issued
+        address badgeToken = IEntity(msg.sender).getBadgeToken();
+        uint256 totalTokensAwarded = userToBadgeTokenLedger[recipient][
+            address(badgeToken)
+        ];
+        require(amount <= totalTokensAwarded, "Not enough tokens");
         _;
     }
 
@@ -82,15 +95,15 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         return false;
     }
 
-    function name() external view override returns (string memory) {
+    function name() external pure override returns (string memory) {
         return "Badge XP points";
     }
 
-    function symbol() external view override returns (string memory) {
+    function symbol() external pure override returns (string memory) {
         return "BXP";
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return 2;
     }
 
@@ -100,9 +113,16 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         address recipient,
         address registry
     ) external override registered(registry) returns (uint256 xp) {
+        // 1. Calculate Badge XP
         xp = IBadgeXPOracle(xpOracle).calculateXP(level);
+
+        // 2. Increment balance
         balance[recipient] += xp;
         totalXP += xp;
+
+        // 3. Keep track of how much each issuer has awarded to each user
+        address badgeToken = IEntity(msg.sender).getBadgeToken();
+        userToBadgeTokenLedger[recipient][address(badgeToken)] += xp;
         emit Transfer(msg.sender, recipient, xp);
     }
 
@@ -110,10 +130,28 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         uint256 amount,
         address recipient,
         address registry
-    ) external override registered(registry) {
+    )
+        external
+        override
+        registered(registry)
+        restrictBurnAmount(amount, recipient)
+    {
+        // 1. Decrement balance
         balance[recipient] -= amount;
         totalXP -= amount;
         emit Transfer(recipient, address(0), amount);
+    }
+
+    function resetTokens(
+        uint256 amount,
+        address from,
+        address to,
+        address registry
+    ) external override registered(registry) restrictBurnAmount(amount, from) {
+        // 1. Decrement balance
+        balance[from] -= amount;
+        balance[to] += amount;
+        emit Transfer(address(this), to, amount);
     }
 
     function bytesToAddress(bytes memory bys)

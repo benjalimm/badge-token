@@ -23,8 +23,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     );
 
     event BadgeBurned(bool byEntity, bool withPrejudice);
-
     event BadgeURIReset(string from, string to);
+    event TokenSiteSet(string site);
 
     // ** Structs ** \\
     struct BadgeInfo {
@@ -33,17 +33,20 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         uint256 xp;
     }
 
-    // ** Token info ** \\
+    // ** ** \\
+    string public tokenSite;
+
+    // ** TOKEN INFO ** \\
     Counters.Counter private _tokenIds;
     mapping(uint256 => BadgeInfo) private idToBadgeInfo;
     Counters.Counter public demeritPoints;
 
-    // ** Pertinent addresses ** \\
+    // ** RELATED CONTRACTS ** \\
     address public entity;
     address public recoveryOracle;
 
-    // ** Constants ** \\
-    uint256 public constant TIME_ALLOWED_TO_BURN = 2592000; // 30 days
+    // ** CONSTANTS ** \\
+    uint256 public constant TIME_ALLOWED_TO_BURN = 1296000; // 15 days
 
     constructor(
         address _entity,
@@ -54,7 +57,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         recoveryOracle = _recoveryOracle;
     }
 
-    // ** Receive / Fallback ** \\
+    // ** RECEIVE / FALLBACK ** \\
     receive() external payable {
         emit StakeReceived(
             msg.value,
@@ -71,10 +74,24 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         );
     }
 
-    // ** Modifiers ** \\
+    // ** MODIFIERS ** \\
     modifier entityOnly() {
         if (msg.sender != entity)
             revert Unauthorized("Only entity can call this");
+        _;
+    }
+
+    modifier beforeTokenChangeTimeLimit(uint256 tokenId) {
+        // Entities have up to 15 days to burn / make changes to the Badge
+        uint256 dateMinted = getTimestampForBadge(tokenId);
+        if (dateMinted == 0) revert Failure("Badge not minted");
+
+        // 1. Calculate time since Badge minted
+        uint256 timeSinceMinted = block.timestamp - dateMinted;
+
+        // 2. Ensure time limit hasn't been reached (15 days)
+        if (timeSinceMinted > TIME_ALLOWED_TO_BURN)
+            revert Unauthorized("URI can only be reset for first 15 days");
         _;
     }
 
@@ -114,17 +131,12 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     /// For entity to (attempt to) burn Badge ///
-    function burnAsEntity(uint256 tokenId) external override entityOnly {
-        uint256 dateMinted = getTimestampForBadge(tokenId);
-        if (dateMinted == 0) revert Failure("Badge not minted");
-
-        // 1. Calculate time since Badge minted
-        uint256 timeSinceMinted = block.timestamp - dateMinted;
-
-        // 2. Ensure time limit hasn't been reached
-        if (timeSinceMinted > TIME_ALLOWED_TO_BURN)
-            revert Unauthorized("Badge can only be burned for first 30 days");
-
+    function burnAsEntity(uint256 tokenId)
+        external
+        override
+        entityOnly
+        beforeTokenChangeTimeLimit(tokenId)
+    {
         // 3. Delete badge info
         delete idToBadgeInfo[tokenId];
 
@@ -137,24 +149,27 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         external
         override
         entityOnly
+        beforeTokenChangeTimeLimit(tokenId)
     {
-        uint256 dateMinted = getTimestampForBadge(tokenId);
-        if (dateMinted == 0) revert Failure("Badge not minted");
-
-        // 1. Calculate time since Badge minted
-        uint256 timeSinceMinted = block.timestamp - dateMinted;
-
-        // 2. Ensure time limit hasn't been reached
-        if (timeSinceMinted > TIME_ALLOWED_TO_BURN / 2)
-            revert Unauthorized("URI can only be reset for first 15 days");
-
-        // 3. Get old tokenURI
+        // 1. Get old tokenURI
         string memory oldTokenURI = _tokenURIs[tokenId];
 
-        // 4. Set new token URI
+        // 2. Set new token URI
         _setTokenURI(tokenId, tokenURI);
 
         emit BadgeURIReset(oldTokenURI, tokenURI);
+    }
+
+    function resetBadgeRecipient(uint256 tokenId, address newRecipient)
+        external
+        override
+        entityOnly
+        beforeTokenChangeTimeLimit(tokenId)
+    {
+        require(newRecipient != address(0), "ERC721: mint to the zero address");
+        require(!_exists(tokenId), "ERC721: token already minted");
+        _owners[tokenId] = newRecipient;
+        emit Transfer(address(this), newRecipient, tokenId);
     }
 
     /// For recipient to burn Badge ///
@@ -237,7 +252,12 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         }
     }
 
-    // ** Getter functions ** \\
+    function setTokenSite(string memory site) external override entityOnly {
+        tokenSite = site;
+        emit TokenSiteSet(site);
+    }
+
+    // ** GETTER FUNCTIONS ** \\
     function getDemeritPoints() public view override returns (uint256) {
         return demeritPoints.current();
     }
