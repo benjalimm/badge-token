@@ -20,7 +20,7 @@ contract Entity is IEntity {
     event GenesisTokenReassigned(address from, address to);
     event EntityMigrated(address newEntity);
     event TokensMigrated(address newBadgeToken, address newPermToken);
-    event RecipientReset(address from, address to);
+    event RecipientReset(address from, address to, uint256 tokenId, uint256 xp);
 
     // ** Constants ** \\
     uint256 public immutable BASE_MINIMUM_STAKE;
@@ -214,7 +214,7 @@ contract Entity is IEntity {
             badgeRegistry
         );
 
-        emit RecipientReset(previousRecipient, to);
+        emit RecipientReset(previousRecipient, to, id, xp);
     }
 
     /// BadgeToken can call this to burn XP points ///

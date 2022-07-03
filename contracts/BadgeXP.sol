@@ -151,6 +151,12 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         // 1. Decrement balance
         balance[from] -= amount;
         balance[to] += amount;
+
+        address badgeToken = IEntity(msg.sender).getBadgeToken();
+
+        // 2. Adjust the user to badge token ledger
+        userToBadgeTokenLedger[from][address(badgeToken)] -= amount;
+        userToBadgeTokenLedger[to][address(badgeToken)] += amount;
         emit Transfer(address(this), to, amount);
     }
 

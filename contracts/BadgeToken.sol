@@ -167,9 +167,9 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         beforeTokenChangeTimeLimit(tokenId)
     {
         require(newRecipient != address(0), "ERC721: mint to the zero address");
-        require(!_exists(tokenId), "ERC721: token already minted");
+        address previousRecipient = _owners[tokenId];
         _owners[tokenId] = newRecipient;
-        emit Transfer(address(this), newRecipient, tokenId);
+        emit Transfer(previousRecipient, newRecipient, tokenId);
     }
 
     /// For recipient to burn Badge ///
