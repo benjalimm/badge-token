@@ -12,6 +12,9 @@ interface IBadgeToken {
 
     function resetBadgeURI(uint256 tokenId, string memory tokenURI) external;
 
+    function resetBadgeRecipient(uint256 tokenId, address newRecipient)
+        external;
+
     function getTimestampForBadge(uint256 tokenId)
         external
         view
@@ -24,4 +27,6 @@ interface IBadgeToken {
     function getDemeritPoints() external view returns (uint256);
 
     function getEntity() external view returns (address);
+
+    function setTokenSite(string memory site) external;
 }

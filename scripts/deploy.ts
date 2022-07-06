@@ -15,26 +15,31 @@ import {
   BadgeXPOracle,
 } from "../typechain";
 
+// ** CONFIGS ** \\
+const numberOfSecondsToWaitBetweenTransactions: number = 10;
+
+// ** HELPER FUNCTIONS** \\
 async function wait(seconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
-
-const numberOfSecondsToWaitBetweenTransactions: number = 10;
 
 async function waitForSetAmountOfTime(): Promise<void> {
   return wait(numberOfSecondsToWaitBetweenTransactions);
 }
 
+// ** DEPLOY SCRIPT ** \\
 async function main() {
   // 1. Deploy badge registry
   let badgeRegistry: BadgeRegistry;
+
+  const badgeRegistryContract = await ethers.getContractFactory(
+    "BadgeRegistry"
+  );
   let badgeRegistryAddress: string;
+  // badgeRegistry = badgeRegistryContract.attach(badgeRegistryAddress);
 
   try {
     console.log("Attempting to deploy Badge registry...");
-    const badgeRegistryContract = await ethers.getContractFactory(
-      "BadgeRegistry"
-    );
     badgeRegistry = await badgeRegistryContract.deploy();
     await badgeRegistry.deployed();
     badgeRegistryAddress = badgeRegistry.address;
@@ -49,23 +54,23 @@ async function main() {
   await waitForSetAmountOfTime();
 
   // 7. Deploy Badge recovery oracle
-  // let recoveryOracle: BadgeRecoveryOracle;
-  // try {
-  //   const badgeRecoveryOracleContract = await ethers.getContractFactory(
-  //     "BadgeRecoveryOracle"
-  //   );
-  //   console.log("Attempting to deploy Badge recovery oracle...");
-  //   recoveryOracle = await badgeRecoveryOracleContract.deploy();
-  //   await recoveryOracle.deployed();
-  //   console.log(
-  //     "Successfully deployed BadgeRecoveryOracle to address: ",
-  //     recoveryOracle.address
-  //   );
-  // } catch (e) {
-  //   throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
-  // }
+  let recoveryOracle: BadgeRecoveryOracle;
+  try {
+    const badgeRecoveryOracleContract = await ethers.getContractFactory(
+      "BadgeRecoveryOracle"
+    );
+    console.log("Attempting to deploy Badge recovery oracle...");
+    recoveryOracle = await badgeRecoveryOracleContract.deploy();
+    await recoveryOracle.deployed();
+    console.log(
+      "Successfully deployed BadgeRecoveryOracle to address: ",
+      recoveryOracle.address
+    );
+  } catch (e) {
+    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  }
 
-  // await waitForSetAmountOfTime();
+  await waitForSetAmountOfTime();
 
   const recoveryOracleAddress = "0xFA99FDf153e5647422484578c761889C8bF971D6";
 

@@ -20,6 +20,7 @@ contract Entity is IEntity {
     event GenesisTokenReassigned(address from, address to);
     event EntityMigrated(address newEntity);
     event TokensMigrated(address newBadgeToken, address newPermToken);
+    event RecipientReset(address from, address to, uint256 tokenId, uint256 xp);
 
     // ** Constants ** \\
     uint256 public immutable BASE_MINIMUM_STAKE;
@@ -134,9 +135,8 @@ contract Entity is IEntity {
         _;
     }
 
-    // ** Badge functions ** \\
+    // ** BADGE METHODS ** \\
 
-    /// Mint Badge - For admins ///
     function mintBadge(
         address to,
         uint8 level,
@@ -146,16 +146,7 @@ contract Entity is IEntity {
 
         // 1. Get Badge mint price based on level
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
-        require(
-            msg.value >= badgePrice,
-            concat(
-                "Not enough ETH: ",
-                concat(
-                    concat("Badge price - ", Strings.toString(badgePrice)),
-                    concat("value - ", Strings.toString(msg.value))
-                )
-            )
-        );
+        require(msg.value >= badgePrice, "Not enough ETH to mint badge");
 
         // 2. Send eth to contract
         address safe = IBadgeRegistry(badgeRegistry).getSafe();
@@ -178,19 +169,54 @@ contract Entity is IEntity {
         address owner = IERC721(badgeToken).ownerOf(id);
 
         // 3. Burn XP
-        IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
+        (bool xpSuccess, ) = getBadgeXPToken().call(
+            abi.encodeWithSelector(
+                IBadgeXP.burn.selector,
+                xp,
+                owner,
+                badgeRegistry
+            )
+        );
+
+        require(xpSuccess, "Call to Badge XP failed");
 
         // 4. Burn Badge
-        IBadgeToken(badgeToken).burnAsEntity(id);
+        (bool tokenSuccess, ) = badgeToken.call(
+            abi.encodeWithSelector(IBadgeToken.burnAsEntity.selector, id)
+        );
+
+        require(tokenSuccess, "Call to Badge token failed");
     }
 
-    /// Reset Badge URI - For admins ///
     function resetBadgeURI(uint256 id, string memory tokenURI)
         external
         admins
         minStakeReq
     {
         IBadgeToken(badgeToken).resetBadgeURI(id, tokenURI);
+    }
+
+    function resetBadgeRecipient(uint256 id, address to)
+        external
+        admins
+        minStakeReq
+    {
+        // 1. Get xp points
+        uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
+        address previousRecipient = IERC721(badgeToken).ownerOf(id);
+        // 2. Reset Badge recipient
+        IBadgeToken(badgeToken).resetBadgeRecipient(id, to);
+        /// Step 1 will ensure that the change can only be made within the time limit. Hence, if this is made outside the time limit (15 days), this first method will fail.
+
+        // 2. Reset BadgeXP points
+        IBadgeXP(getBadgeXPToken()).resetXP(
+            xp,
+            previousRecipient,
+            to,
+            badgeRegistry
+        );
+
+        emit RecipientReset(previousRecipient, to, id, xp);
     }
 
     /// BadgeToken can call this to burn XP points ///
@@ -202,7 +228,11 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
     }
 
-    // ** Permission functions ** \\
+    function setTokenSite(string memory site) external admins minStakeReq {
+        IBadgeToken(badgeToken).setTokenSite(site);
+    }
+
+    // ** PERMISSION FUNCTIONS ** \\
 
     /// Mint Permission - Convert level enum to uint256 ///
     function mintPermissionToken(
@@ -330,7 +360,7 @@ contract Entity is IEntity {
             (BASE_MINIMUM_STAKE * (1000 + ((demeritPoints**2) * 100))) / 1000;
     }
 
-    // ** Migration functions ** \\
+    // ** MIGRATIONS FUNCTIONS ** \\
     function migrateToEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))

@@ -12,4 +12,11 @@ interface IBadgeXP {
         address recipient,
         address registry
     ) external;
+
+    function resetXP(
+        uint256 amount,
+        address from,
+        address to,
+        address registry
+    ) external;
 }
