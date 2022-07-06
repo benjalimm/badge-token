@@ -110,8 +110,8 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     }
 
     function deleteBadgeInfo(uint256 id) private {
-        idToBadgeInfo[id] = BadgeInfo(0, 0, 0);
-        _setTokenURI(id, "");
+        delete idToBadgeInfo[id];
+        delete _tokenURIs[id];
     }
 
     // ** BADGE TOKEN METHODS ** \\
