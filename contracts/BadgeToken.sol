@@ -100,7 +100,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         entity = _entity;
     }
 
-    // ** Convenience functions ** \\
+    // ** CONVENIENCE FUNCTIONS ** \\
     function concat(string memory s1, string memory s2)
         private
         pure
@@ -109,7 +109,12 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         return string(abi.encodePacked(s1, s2));
     }
 
-    // ** Token functions ** \\
+    function deleteBadgeInfo(uint256 id) private {
+        idToBadgeInfo[id] = BadgeInfo(0, 0, 0);
+        _setTokenURI(id, "");
+    }
+
+    // ** BADGE TOKEN METHODS ** \\
 
     /// For entity to mint Badge ///
     function mintBadge(
@@ -137,10 +142,10 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         entityOnly
         beforeTokenChangeTimeLimit(tokenId)
     {
-        // 3. Delete badge info
-        delete idToBadgeInfo[tokenId];
+        // 1. Delete badge info
+        deleteBadgeInfo(tokenId);
 
-        // 4. Burn
+        // 2. Burn
         _burn(tokenId);
         emit BadgeBurned(true, false);
     }
@@ -167,8 +172,16 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         beforeTokenChangeTimeLimit(tokenId)
     {
         require(newRecipient != address(0), "ERC721: mint to the zero address");
+
         address previousRecipient = _owners[tokenId];
+
+        // 1. Reset balance
+        _balances[previousRecipient] -= 1;
+        _balances[newRecipient] += 1;
+
+        // 2. Reset new owner
         _owners[tokenId] = newRecipient;
+
         emit Transfer(previousRecipient, newRecipient, tokenId);
     }
 
@@ -212,7 +225,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         }
 
         // 5. Delete badge info
-        delete idToBadgeInfo[tokenId];
+        deleteBadgeInfo(tokenId);
 
         emit BadgeBurned(false, withPrejudice);
     }

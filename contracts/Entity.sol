@@ -135,9 +135,8 @@ contract Entity is IEntity {
         _;
     }
 
-    // ** Badge functions ** \\
+    // ** BADGE METHODS ** \\
 
-    /// Mint Badge - For admins ///
     function mintBadge(
         address to,
         uint8 level,
@@ -147,16 +146,7 @@ contract Entity is IEntity {
 
         // 1. Get Badge mint price based on level
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
-        require(
-            msg.value >= badgePrice,
-            concat(
-                "Not enough ETH: ",
-                concat(
-                    concat("Badge price - ", Strings.toString(badgePrice)),
-                    concat("value - ", Strings.toString(msg.value))
-                )
-            )
-        );
+        require(msg.value >= badgePrice, "Not enough ETH to mint badge");
 
         // 2. Send eth to contract
         address safe = IBadgeRegistry(badgeRegistry).getSafe();
@@ -173,19 +163,31 @@ contract Entity is IEntity {
     /// Burn Badge - For admins ///
     function burnBadge(uint256 id) external admins minStakeReq {
         // 1. Get xp points
-        uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
+        // uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
 
         // 2. Get owner
         address owner = IERC721(badgeToken).ownerOf(id);
 
         // 3. Burn XP
-        IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
+        // (bool xpSuccess, ) = getBadgeXPToken().call(
+        //     abi.encodeWithSelector(
+        //         IBadgeXP.burn.selector,
+        //         xp,
+        //         owner,
+        //         badgeRegistry
+        //     )
+        // );
+
+        // require(xpSuccess, "Call to Badge XP failed");
 
         // 4. Burn Badge
-        IBadgeToken(badgeToken).burnAsEntity(id);
+        (bool tokenSuccess, ) = badgeToken.call(
+            abi.encodeWithSelector(IBadgeToken.burnAsEntity.selector, id)
+        );
+
+        require(tokenSuccess, "Call to Badge token failed");
     }
 
-    /// Reset Badge URI - For admins ///
     function resetBadgeURI(uint256 id, string memory tokenURI)
         external
         admins
@@ -226,7 +228,11 @@ contract Entity is IEntity {
         IBadgeXP(getBadgeXPToken()).burn(xp, owner, badgeRegistry);
     }
 
-    // ** Permission functions ** \\
+    function setTokenSite(string memory site) external admins minStakeReq {
+        IBadgeToken(badgeToken).setTokenSite(site);
+    }
+
+    // ** PERMISSION FUNCTIONS ** \\
 
     /// Mint Permission - Convert level enum to uint256 ///
     function mintPermissionToken(
@@ -354,7 +360,7 @@ contract Entity is IEntity {
             (BASE_MINIMUM_STAKE * (1000 + ((demeritPoints**2) * 100))) / 1000;
     }
 
-    // ** Migration functions ** \\
+    // ** MIGRATIONS FUNCTIONS ** \\
     function migrateToEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))

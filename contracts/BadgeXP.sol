@@ -42,7 +42,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         // 1. Entity can only burn what they have issued
         address badgeToken = IEntity(msg.sender).getBadgeToken();
         uint256 totalTokensAwarded = userToBadgeTokenLedger[recipient][
-            address(badgeToken)
+            badgeToken
         ];
         require(amount <= totalTokensAwarded, "Not enough tokens");
         _;
@@ -122,7 +122,7 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
 
         // 3. Keep track of how much each issuer has awarded to each user
         address badgeToken = IEntity(msg.sender).getBadgeToken();
-        userToBadgeTokenLedger[recipient][address(badgeToken)] += xp;
+        userToBadgeTokenLedger[recipient][badgeToken] += xp;
         emit Transfer(msg.sender, recipient, xp);
     }
 
@@ -136,8 +136,15 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         registered(registry)
         restrictBurnAmount(amount, recipient)
     {
+        address badgeToken = IEntity(msg.sender).getBadgeToken();
+
         // 1. Decrement balance
         balance[recipient] -= amount;
+
+        // 2. Decrement badge token specific ledger
+        userToBadgeTokenLedger[recipient][badgeToken] -= amount;
+
+        // 3. Decrement totalXP
         totalXP -= amount;
         emit Transfer(recipient, address(0), amount);
     }
@@ -155,9 +162,9 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         address badgeToken = IEntity(msg.sender).getBadgeToken();
 
         // 2. Adjust the user to badge token ledger
-        userToBadgeTokenLedger[from][address(badgeToken)] -= amount;
-        userToBadgeTokenLedger[to][address(badgeToken)] += amount;
-        emit Transfer(address(this), to, amount);
+        userToBadgeTokenLedger[from][badgeToken] -= amount;
+        userToBadgeTokenLedger[to][badgeToken] += amount;
+        emit Transfer(from, to, amount);
     }
 
     function bytesToAddress(bytes memory bys)
