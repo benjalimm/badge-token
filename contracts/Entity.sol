@@ -163,22 +163,22 @@ contract Entity is IEntity {
     /// Burn Badge - For admins ///
     function burnBadge(uint256 id) external admins minStakeReq {
         // 1. Get xp points
-        // uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
+        uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
 
         // 2. Get owner
         address owner = IERC721(badgeToken).ownerOf(id);
 
         // 3. Burn XP
-        // (bool xpSuccess, ) = getBadgeXPToken().call(
-        //     abi.encodeWithSelector(
-        //         IBadgeXP.burn.selector,
-        //         xp,
-        //         owner,
-        //         badgeRegistry
-        //     )
-        // );
+        (bool xpSuccess, ) = getBadgeXPToken().call(
+            abi.encodeWithSelector(
+                IBadgeXP.burn.selector,
+                xp,
+                owner,
+                badgeRegistry
+            )
+        );
 
-        // require(xpSuccess, "Call to Badge XP failed");
+        require(xpSuccess, "Call to Badge XP failed");
 
         // 4. Burn Badge
         (bool tokenSuccess, ) = badgeToken.call(
