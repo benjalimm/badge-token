@@ -10,6 +10,7 @@ import "../interfaces/IEntity.sol";
 import "./CommonErrors.sol";
 
 contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
+    string public constant version = "1.0";
     address public deployer;
 
     // ** ERC20 PROPERTIES ** \\

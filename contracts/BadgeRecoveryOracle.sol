@@ -2,6 +2,8 @@ pragma solidity ^0.8.4;
 import "../interfaces/IBadgeRecoveryOracle.sol";
 
 contract BadgeRecoveryOracle is IBadgeRecoveryOracle {
+    string public constant version = "1.0";
+
     // ** Events ** \\
     event RecoveryAddressSet(address initialAddress, address recoveryAddress);
 

@@ -16,6 +16,8 @@ import "../interfaces/IEntity.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Entity is IEntity {
+    string public constant version = "1.0";
+
     // ** Events ** \\
     event GenesisTokenReassigned(address from, address to);
     event EntityMigrated(address newEntity);
@@ -143,6 +145,7 @@ contract Entity is IEntity {
         string calldata _tokenURI
     ) external payable admins minStakeReq {
         require(level >= 0, "Level cannot be less than 0");
+        require(msg.sender != to, "Cannot award self");
 
         // 1. Get Badge mint price based on level
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);

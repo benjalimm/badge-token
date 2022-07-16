@@ -11,6 +11,7 @@ import "./CommonErrors.sol";
 
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
+    string public constant version = "1.0";
 
     // ** Events ** \\
     event StakeReceived(uint256 amount, bool minimumStakeMet);
@@ -33,7 +34,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         uint256 xp;
     }
 
-    // ** ** \\
+    // ** PROPERTIES ** \\
     string public tokenSite;
 
     // ** TOKEN INFO ** \\

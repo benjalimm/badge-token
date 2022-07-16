@@ -12,6 +12,8 @@ import "../interfaces/IEntity.sol";
 import "./CommonErrors.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
+    string public constant version = "1.0";
+
     // ** Enums ** \\
     enum EntityReverseRecordType {
         BadgeToken,
