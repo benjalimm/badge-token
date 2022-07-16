@@ -10,6 +10,7 @@ import "./CommonErrors.sol";
 
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;
+    string public constant version = "1.0";
 
     //** Token info ** \\
     Counters.Counter private _ids;
