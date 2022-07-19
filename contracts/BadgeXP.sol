@@ -108,6 +108,14 @@ contract BadgeXP is IERC20, IERC20Metadata, IBadgeXP {
         return 2;
     }
 
+    function getXPForBadgeContractToRecipient(
+        address badgeContract,
+        address recipient
+    ) external view override returns (uint256) {
+        // Find out how much Badge contract (Entity) has awarded to recipient
+        return userToBadgeTokenLedger[recipient][badgeContract];
+    }
+
     // ** BadgeXP functions ** \\
     function mint(
         uint256 level,

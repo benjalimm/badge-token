@@ -19,4 +19,9 @@ interface IBadgeXP {
         address to,
         address registry
     ) external;
+
+    function getXPForBadgeContractToRecipient(
+        address badgeContract,
+        address recipient
+    ) external view returns (uint256);
 }
