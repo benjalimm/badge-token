@@ -54,21 +54,21 @@ async function main() {
   await waitForSetAmountOfTime();
 
   // 7. Deploy Badge recovery oracle
-  let recoveryOracle: BadgeRecoveryOracle;
-  try {
-    const badgeRecoveryOracleContract = await ethers.getContractFactory(
-      "BadgeRecoveryOracle"
-    );
-    console.log("Attempting to deploy Badge recovery oracle...");
-    recoveryOracle = await badgeRecoveryOracleContract.deploy();
-    await recoveryOracle.deployed();
-    console.log(
-      "Successfully deployed BadgeRecoveryOracle to address: ",
-      recoveryOracle.address
-    );
-  } catch (e) {
-    throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
-  }
+  // let recoveryOracle: BadgeRecoveryOracle;
+  // try {
+  //   const badgeRecoveryOracleContract = await ethers.getContractFactory(
+  //     "BadgeRecoveryOracle"
+  //   );
+  //   console.log("Attempting to deploy Badge recovery oracle...");
+  //   recoveryOracle = await badgeRecoveryOracleContract.deploy();
+  //   await recoveryOracle.deployed();
+  //   console.log(
+  //     "Successfully deployed BadgeRecoveryOracle to address: ",
+  //     recoveryOracle.address
+  //   );
+  // } catch (e) {
+  //   throw new Error(`Failed to deploy BadgePriceCalculator due to error: ${e}`);
+  // }
 
   await waitForSetAmountOfTime();
 
