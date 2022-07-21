@@ -19,7 +19,7 @@ contract BadgeRegistry is IBadgeRegistry {
         BadgeToken,
         PermissionToken
     }
-    // ** Events ** \\
+    // ** EVENTS ** \\
     event EntityRegistered(
         address entityAddress,
         string entityName,
@@ -28,8 +28,11 @@ contract BadgeRegistry is IBadgeRegistry {
         address badgeToken
     );
 
-    // ** Pertinent addresses ** \\
+    // ** Deployer properties ** \\
     address public deployer;
+    address public requestedDeployer;
+
+    // ** Pertinent addresses ** \\
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
@@ -259,5 +262,18 @@ contract BadgeRegistry is IBadgeRegistry {
         deployerOnly
     {
         baseMinimumStake = _baseMinimumStake;
+    }
+
+    // ** DEPLOYER MGMT METHODS ** \\
+    function requestNewDeployer(address _requestedDeployer)
+        external
+        deployerOnly
+    {
+        requestedDeployer = _requestedDeployer;
+    }
+
+    function acceptDeployerRequest() external {
+        require(msg.sender == requestedDeployer, "Not requested deployer");
+        deployer = msg.sender;
     }
 }
