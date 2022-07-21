@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 import "../interfaces/IBadgePriceOracle.sol";
+import "../interfaces/IBadgeRegistry.sol";
 
 contract BadgePriceOracle is IBadgePriceOracle {
     string public constant version = "1.0";
@@ -9,10 +10,10 @@ contract BadgePriceOracle is IBadgePriceOracle {
     uint256 public baseBadgePrice = 0.0035 ether;
     uint256 public levelMultiplierX100 = 250; // Represents 2.5x
 
-    address public deployer;
+    address public badgeRegistry;
 
-    constructor() {
-        deployer = msg.sender;
+    constructor(address _badgeRegistry) {
+        badgeRegistry = _badgeRegistry;
     }
 
     function pow(uint256 n, uint256 e) internal pure returns (uint256) {
@@ -49,6 +50,7 @@ contract BadgePriceOracle is IBadgePriceOracle {
     }
 
     function setBaseBadgePrice(uint256 price) external {
+        address deployer = IBadgeRegistry(badgeRegistry).getDeployer();
         require(msg.sender == deployer, "Deployer only");
         baseBadgePrice = price;
     }

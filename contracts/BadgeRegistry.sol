@@ -276,4 +276,8 @@ contract BadgeRegistry is IBadgeRegistry {
         require(msg.sender == requestedDeployer, "Not requested deployer");
         deployer = msg.sender;
     }
+
+    function getDeployer() external view override returns (address) {
+        return deployer;
+    }
 }

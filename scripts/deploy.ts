@@ -261,7 +261,9 @@ async function main() {
       "BadgePriceOracle"
     );
     console.log("Attempting to deploy BadgePriceOracle...");
-    badgePriceOracle = await badgePriceOracleContract.deploy();
+    badgePriceOracle = await badgePriceOracleContract.deploy(
+      badgeRegistryAddress
+    );
     await badgePriceOracle.deployed();
     console.log(
       "Successfully deployed BadgePriceOracle to address: ",
