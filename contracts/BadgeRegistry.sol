@@ -19,7 +19,7 @@ contract BadgeRegistry is IBadgeRegistry {
         BadgeToken,
         PermissionToken
     }
-    // ** Events ** \\
+    // ** EVENTS ** \\
     event EntityRegistered(
         address entityAddress,
         string entityName,
@@ -28,13 +28,16 @@ contract BadgeRegistry is IBadgeRegistry {
         address badgeToken
     );
 
-    // ** Pertinent addresses ** \\
+    // ** Deployer properties ** \\
     address public deployer;
+    address public requestedDeployer;
+
+    // ** Pertinent addresses ** \\
     address public entityFactory;
     address public badgeTokenFactory;
     address public permissionTokenFactory;
     address public badgeXPToken;
-    address public badgeGnosisSafe = address(0);
+    address public badgeTreasury;
     address public badgePriceOracle;
     address public recoveryOracle;
 
@@ -183,7 +186,7 @@ contract BadgeRegistry is IBadgeRegistry {
     }
 
     function getSafe() external view override returns (address) {
-        return badgeGnosisSafe;
+        return badgeTreasury;
     }
 
     function getRecoveryOracle() external view override returns (address) {
@@ -259,5 +262,26 @@ contract BadgeRegistry is IBadgeRegistry {
         deployerOnly
     {
         baseMinimumStake = _baseMinimumStake;
+    }
+
+    function setBadgeTreasury(address _badgeTreasury) external deployerOnly {
+        badgeTreasury = _badgeTreasury;
+    }
+
+    // ** DEPLOYER MGMT METHODS ** \\
+    function requestNewDeployer(address _requestedDeployer)
+        external
+        deployerOnly
+    {
+        requestedDeployer = _requestedDeployer;
+    }
+
+    function acceptDeployerRequest() external {
+        require(msg.sender == requestedDeployer, "Not requested deployer");
+        deployer = msg.sender;
+    }
+
+    function getDeployer() external view override returns (address) {
+        return deployer;
     }
 }

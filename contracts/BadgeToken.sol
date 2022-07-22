@@ -13,7 +13,7 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
     string public constant version = "1.0";
 
-    // ** Events ** \\
+    // ** EVENTS ** \\
     event StakeReceived(uint256 amount, bool minimumStakeMet);
 
     event BadgeMinted(
