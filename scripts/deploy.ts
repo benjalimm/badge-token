@@ -286,6 +286,27 @@ async function main() {
     );
   }
 
+  // Set badge treasury
+  try {
+    console.log("Attempting to set Badge treasury");
+    await badgeRegistry.setBadgeTreasury(
+      "0xd1450649e41241AAdE6710817210C7703C8Eba4E"
+    );
+    console.log("Successfully set Badge treasury");
+  } catch (e) {
+    throw new Error(`Failed to set Badge treasury due to error: ${e}`);
+  }
+
+  try {
+    console.log("Attempting to set request new deployer");
+    await badgeRegistry.requestNewDeployer(
+      "0x95dE2aF29E3cc1B776C70ECe4c6392022B1180dC"
+    );
+    console.log("Successfully requested new deployer");
+  } catch (e) {
+    throw new Error(`Failed to request new deployer due to error: ${e}`);
+  }
+
   console.log("Successfully deployed Badge contracts!");
 }
 

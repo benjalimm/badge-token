@@ -37,7 +37,7 @@ contract BadgeRegistry is IBadgeRegistry {
     address public badgeTokenFactory;
     address public permissionTokenFactory;
     address public badgeXPToken;
-    address public badgeGnosisSafe = address(0);
+    address public badgeTreasury;
     address public badgePriceOracle;
     address public recoveryOracle;
 
@@ -186,7 +186,7 @@ contract BadgeRegistry is IBadgeRegistry {
     }
 
     function getSafe() external view override returns (address) {
-        return badgeGnosisSafe;
+        return badgeTreasury;
     }
 
     function getRecoveryOracle() external view override returns (address) {
@@ -262,6 +262,10 @@ contract BadgeRegistry is IBadgeRegistry {
         deployerOnly
     {
         baseMinimumStake = _baseMinimumStake;
+    }
+
+    function setBadgeTreasury(address _badgeTreasury) external deployerOnly {
+        badgeTreasury = _badgeTreasury;
     }
 
     // ** DEPLOYER MGMT METHODS ** \\
