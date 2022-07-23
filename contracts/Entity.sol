@@ -16,7 +16,7 @@ import "../interfaces/IEntity.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Entity is IEntity {
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
 
     // ** Events ** \\
     event GenesisTokenReassigned(address from, address to);
@@ -349,6 +349,10 @@ contract Entity is IEntity {
         return calculateMinStake(IBadgeToken(badgeToken).getDemeritPoints());
     }
 
+    function getGenUser() external view override returns (address) {
+        return genesisTokenHolder;
+    }
+
     function calculateMinStake(uint256 demeritPoints)
         public
         view
@@ -389,9 +393,6 @@ contract Entity is IEntity {
         // 2. Set tokens;
         badgeToken = badge;
         permissionToken = permission;
-
-        // 3. Set reverse registry in BadgeRegistry
-        IBadgeRegistry(badgeRegistry).setTokenReverseRecords(badge, permission);
 
         emit TokensMigrated(badge, permission);
     }

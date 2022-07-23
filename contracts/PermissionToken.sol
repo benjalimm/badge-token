@@ -10,7 +10,7 @@ import "./CommonErrors.sol";
 
 contract PermissionToken is NonTransferableERC721, IPermissionToken {
     using Counters for Counters.Counter;
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
 
     //** Token info ** \\
     Counters.Counter private _ids;
@@ -103,6 +103,11 @@ contract PermissionToken is NonTransferableERC721, IPermissionToken {
 
         // Burn id
         _burn(id);
+    }
+
+    // Simulate owner of contract
+    function owner() public view returns (address) {
+        return IEntity(entity).getGenUser();
     }
 
     // ** Getter functions ** \\

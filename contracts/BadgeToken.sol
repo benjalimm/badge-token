@@ -11,7 +11,7 @@ import "./CommonErrors.sol";
 
 contract BadgeToken is NonTransferableERC721, IBadgeToken {
     using Counters for Counters.Counter;
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
 
     // ** EVENTS ** \\
     event StakeReceived(uint256 amount, bool minimumStakeMet);
@@ -241,15 +241,20 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
         }
     }
 
+    // Simulate owner for contract
+    function owner() public view returns (address) {
+        return IEntity(entity).getGenUser();
+    }
+
     function recover(uint256 id) external {
         // 1. Get owner of id
-        address owner = ownerOf(id);
+        address currentOwner = ownerOf(id);
 
         // 2. Get recovery oracle address
         (bool success, bytes memory result) = address(recoveryOracle).call(
             abi.encodeWithSelector(
                 IBadgeRecoveryOracle.getRecoveryAddress.selector,
-                owner
+                currentOwner
             )
         );
 
@@ -257,10 +262,10 @@ contract BadgeToken is NonTransferableERC721, IBadgeToken {
 
         // 3. Check if recovery address matches sender
         if (bytesToAddress(result) == msg.sender) {
-            _balances[owner] -= 1;
+            _balances[currentOwner] -= 1;
             _balances[msg.sender] += 1;
             _owners[id] = msg.sender;
-            emit Transfer(owner, msg.sender, id);
+            emit Transfer(currentOwner, msg.sender, id);
         } else {
             revert Unauthorized("Only recovery address can recover badges");
         }
