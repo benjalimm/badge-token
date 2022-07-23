@@ -18,7 +18,7 @@ import {
 // ** CONFIGS ** \\
 const numberOfSecondsToWaitBetweenTransactions: number = 10;
 
-// ** HELPER FUNCTIONS** \\
+// ** HELPER FUNCTIONS ** \\
 async function wait(seconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
@@ -36,7 +36,7 @@ async function main() {
     "BadgeRegistry"
   );
   const badgeRegistryAddress: string =
-    "0xce56802Deb2Fdd42bA3dB96869D248386A34eB29";
+    "0xEcB32975702b4fE634093BE37578b7AC7e7f7221";
   badgeRegistry = badgeRegistryContract.attach(badgeRegistryAddress);
 
   // try {
@@ -55,6 +55,9 @@ async function main() {
   // await waitForSetAmountOfTime();
 
   // 7. Deploy Badge recovery oracle
+
+  // NOTE: UNCOMMENT THIS OUT ON ACTUALY DEPLOY
+
   // let recoveryOracle: BadgeRecoveryOracle;
   // try {
   //   const badgeRecoveryOracleContract = await ethers.getContractFactory(
@@ -73,6 +76,7 @@ async function main() {
 
   // await waitForSetAmountOfTime();
 
+  // NOTE: REMOVE THIS OUT ON ACTUAL DEPLOY
   // const recoveryOracleAddress = "0xFA99FDf153e5647422484578c761889C8bF971D6";
 
   // // 7.1 Set Badge recovery oracle

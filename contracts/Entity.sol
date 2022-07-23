@@ -127,7 +127,7 @@ contract Entity is IEntity {
         _;
     }
 
-    /// Minimum ETH stake required in Badge token ///
+    // Minimum ETH stake required in Badge token
     modifier minStakeReq() {
         require(
             // Allow for 2% slippage
@@ -137,15 +137,19 @@ contract Entity is IEntity {
         _;
     }
 
+    modifier blockSelf(address to) {
+        require(msg.sender != to, "Cannot send to self");
+        _;
+    }
+
     // ** BADGE METHODS ** \\
 
     function mintBadge(
         address to,
         uint8 level,
         string calldata _tokenURI
-    ) external payable admins minStakeReq {
+    ) external payable admins minStakeReq blockSelf(to) {
         require(level >= 0, "Level cannot be less than 0");
-        require(msg.sender != to, "Cannot award self");
 
         // 1. Get Badge mint price based on level
         uint256 badgePrice = IBadgeRegistry(badgeRegistry).getBadgePrice(level);
@@ -203,6 +207,7 @@ contract Entity is IEntity {
         external
         admins
         minStakeReq
+        blockSelf(to)
     {
         // 1. Get xp points
         uint256 xp = IBadgeToken(badgeToken).getXPForBadge(id);
