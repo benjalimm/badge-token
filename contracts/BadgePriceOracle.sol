@@ -5,7 +5,7 @@ import "../interfaces/IBadgePriceOracle.sol";
 import "../interfaces/IBadgeRegistry.sol";
 
 contract BadgePriceOracle is IBadgePriceOracle {
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
 
     uint256 public baseBadgePrice = 0.0035 ether;
     uint256 public levelMultiplierX100 = 250; // Represents 2.5x

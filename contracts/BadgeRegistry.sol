@@ -12,7 +12,7 @@ import "../interfaces/IEntity.sol";
 import "./CommonErrors.sol";
 
 contract BadgeRegistry is IBadgeRegistry {
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
 
     // ** Enums ** \\
     enum EntityReverseRecordType {
@@ -43,8 +43,6 @@ contract BadgeRegistry is IBadgeRegistry {
 
     // ** Registry info ** \\
     mapping(address => bool) public entities;
-    mapping(address => address) public badgeTokenEntityReverseRecord;
-    mapping(address => address) public permTokenEntityReverseRecord;
     mapping(address => bool) public certifiedRegistries;
 
     // ** ** \\
@@ -99,12 +97,6 @@ contract BadgeRegistry is IBadgeRegistry {
 
             (bool success, ) = badgeToken.call{value: msg.value}("");
             require(success, "Failed to send eth to badge token");
-
-            // 4. Store badge token reverse record
-            badgeTokenEntityReverseRecord[badgeToken] = entityAddress;
-
-            // 5. Store permission token reverse record
-            permTokenEntityReverseRecord[permToken] = entityAddress;
         }
 
         emit EntityRegistered(
@@ -114,39 +106,6 @@ contract BadgeRegistry is IBadgeRegistry {
             permToken,
             badgeToken
         );
-    }
-
-    /**
-     * Figure out which addresses are permission contracts
-     * @param addresses List of contract addresses to filter through
-     * @param tokenType Type of reverse record to filtler through (Badge token or Permission token)
-     * @return filteredAddresses Addresses that exist in the reverse record. Returned as an array fixed to their origianl index in the list.
-     */
-
-    function filterAddressesForEntityReverseRecord(
-        EntityReverseRecordType tokenType,
-        address[] calldata addresses
-    ) external view returns (address[] memory) {
-        // 1. Select the correct reverse record
-        mapping(address => address) storage reverseRecord = tokenType ==
-            EntityReverseRecordType.BadgeToken
-            ? badgeTokenEntityReverseRecord
-            : permTokenEntityReverseRecord;
-
-        address[] memory result = new address[](addresses.length);
-
-        // 2. Loop through addresses for filtering
-        uint256 i = 0;
-        for (i = i; i < addresses.length; i++) {
-            address addr = addresses[i];
-            address entityAddress = reverseRecord[addr];
-
-            // 3. If reverse record exists, add to result
-            if (entities[entityAddress]) {
-                result[i] = addr;
-            }
-        }
-        return result;
     }
 
     // ** Getter methods ** \\
@@ -207,14 +166,6 @@ contract BadgeRegistry is IBadgeRegistry {
     }
 
     // ** Setter functions ** \\
-    function setTokenReverseRecords(address perm, address badge)
-        external
-        override
-        registeredEntity
-    {
-        badgeTokenEntityReverseRecord[badge] = msg.sender;
-        permTokenEntityReverseRecord[perm] = msg.sender;
-    }
 
     // ** Deployer set functions ** \\
     function setEntityFactory(address _entityFactory) external deployerOnly {

@@ -17,4 +17,6 @@ interface IEntity {
         returns (uint256);
 
     function burnXPAsBadgeToken(uint256 xp, address owner) external;
+
+    function getGenUser() external view returns (address);
 }

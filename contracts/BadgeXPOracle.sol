@@ -2,7 +2,7 @@ pragma solidity ^0.8.4;
 import "../interfaces/IBadgeXPOracle.sol";
 
 contract BadgeXPOracle is IBadgeXPOracle {
-    string public constant version = "1.0";
+    string public constant VERSION = "1.0";
     uint256 constant baseXP = 1000;
 
     function calculateXP(uint256 level)
