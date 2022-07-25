@@ -373,6 +373,15 @@ contract Entity is IEntity {
     }
 
     // ** MIGRATIONS FUNCTIONS ** \\
+
+    // Organizations can migrate to new entities, allowing for them to upgrade to entities that possess new functionalities. This is how the migration is executed:
+
+    /// Step 1 - Deploy new entity (without deploying new badge / permission tokens)
+
+    /// Step 2 - Migrate to entity - Set new entity address in badge + perm tokens  (Method below)
+
+    /// Step 3 - Migrate to tokens - Set existing badge + permission tokens in new entity
+
     function migrateToEntity(address _entity, address _registry) external gen {
         // 1. Make sure entity comes from a certified registry
         if (!IBadgeRegistry(badgeRegistry).isRegistryCertified(_registry))
