@@ -29,8 +29,9 @@ async function waitForSetAmountOfTime(): Promise<void> {
 
 const mainnetTreasury = "0x63373c25277607fe5c14d5d18D70AfCD418C43e2";
 const rinkebyTreasury = "0xd1450649e41241AAdE6710817210C7703C8Eba4E";
+const optimismTreasury = "0x4CA01c96161c858727f5CD8bCBA1Df2434b843D0";
 
-const securedBadgeWallet = ""0x95dE2aF29E3cc1B776C70ECe4c6392022B1180dC""
+const securedBadgeWallet = "0x95dE2aF29E3cc1B776C70ECe4c6392022B1180dC";
 
 // ** DEPLOY SCRIPT ** \\
 async function main() {
@@ -76,7 +77,7 @@ async function main() {
 
   await waitForSetAmountOfTime();
 
-  // NOTE: REMOVE THIS OUT ON ACTUAL DEPLOY
+  // // NOTE: REMOVE THIS OUT ON ACTUAL DEPLOY
   const recoveryOracleAddress = recoveryOracle.address;
 
   // 2.1. Set Badge recovery oracle
@@ -280,10 +281,11 @@ async function main() {
 
   await waitForSetAmountOfTime();
 
+  const badgePriceOracleAddress = "0xe94aD55aEBc1008CF0bf591a9627A8E66dc98598";
   // 8.1 Set BadgePrice oracle
   try {
     console.log("Attempting to set BadgePriceOracle in badge registry...");
-    await badgeRegistry.setBadgePriceOracle(badgePriceOracle.address);
+    await badgeRegistry.setBadgePriceOracle(badgePriceOracleAddress);
     console.log("Successfully set BadgePriceOracle in badge registry.");
   } catch (e) {
     throw new Error(
@@ -294,7 +296,7 @@ async function main() {
   // 9. Set badge treasury
   try {
     console.log("Attempting to set Badge treasury");
-    await badgeRegistry.setBadgeTreasury(mainnetTreasury);
+    await badgeRegistry.setBadgeTreasury(optimismTreasury);
     console.log("Successfully set Badge treasury");
   } catch (e) {
     throw new Error(`Failed to set Badge treasury due to error: ${e}`);
@@ -303,9 +305,7 @@ async function main() {
   // 10. Request new deployer
   try {
     console.log("Attempting to set request new deployer");
-    await badgeRegistry.requestNewDeployer(
-      securedBadgeWallet
-    );
+    await badgeRegistry.requestNewDeployer(securedBadgeWallet);
     console.log("Successfully requested new deployer");
   } catch (e) {
     throw new Error(`Failed to request new deployer due to error: ${e}`);

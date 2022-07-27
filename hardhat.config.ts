@@ -55,13 +55,17 @@ const config: HardhatUserConfig = {
       url: "https://rinkeby.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
       accounts: [privateKey],
     },
+    mainnet: {
+      url: "https://mainnet.infura.io/v3/9c0e4231c73e40da8c90be9e43411cd6",
+      accounts: [privateKey],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: "7EEJQQNMH29AU6IREJK35KUN3FBT8YDI3T",
   },
   contractSizer: {
     alphaSort: true,
